@@ -2,9 +2,9 @@ Intro
 -----
 This document describes a stable partitioning comparison sort named gridsort. It is a simplified version of cubesort, intended to be helpful for people wanting to understand or port the code.
 
-Binary Cube
+Binary Grid
 -----------
-Cubesort sorts data by storing data in a [binary grid](https://github.com/scandum/binary_cube), a multidimentional balanced array.
+Gridsort sorts data by storing data in a [binary grid](https://github.com/scandum/binary_cube), a multidimentional sorted array.
 
 Binary Search
 -------------
