@@ -79,8 +79,8 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c.
 | std::sort |  1000000 |  i32 | 0.056202 | 0.056400 |           1 |      random half |
 |  gridsort |  1000000 |  i32 | 0.029229 | 0.029428 |           1 |      random half |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.028882 | 0.029204 |           1 |           stable |
-|  gridsort |  1000000 |  i32 | 0.017583 | 0.017796 |           1 |           stable |
+| std::sort |  1000000 |  i32 | 0.028882 | 0.029204 |           1 |       wave order |
+|  gridsort |  1000000 |  i32 | 0.017583 | 0.017796 |           1 |       wave order |
 
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
 The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
