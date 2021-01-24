@@ -1,22 +1,22 @@
 Intro
 -----
-This document describes a stable partitioning comparison sort named gridsort. It is a simplified version of cubesort, intended to be helpful for people wanting to understand or port the code.
+This document describes a partitioning stable comparison sort named gridsort. It is a simplified version of cubesort, intended to be helpful for people wanting to understand or port the code.
 
 Binary Grid
 -----------
-Gridsort sorts data by storing data in a [binary grid](https://github.com/scandum/binary_cube), a multidimentional sorted array.
+Gridsort sorts data by storing data in a [binary cube](https://github.com/scandum/binary_cube), a multidimentional sorted array.
 
 Binary Search
 -------------
-In order to sort an element a [monobound binary search](https://github.com/scandum/binary_search) is performed to pin point the bucket where the element should be stored.
+In order to sort an element a [monobound binary search](https://github.com/scandum/binary_search) is performed to pin point the bucket where the element should be stored. The binary search is optimized to speed up searches at the start or the end of the index.
 
 Overflow
 --------
-Once a bucket overflows it is sorted by [quadsort](https://github.com/scandum/quadsort) and the content is split between two buckets. People wanting to port gridsort might want to use [tailsort](https://github.com/scandum/quadsort) instead of quadsort.
+Once a bucket overflows it is sorted using [quadsort](https://github.com/scandum/quadsort) and the content is split between two buckets. People wanting to port gridsort might want to use [tailsort](https://github.com/scandum/quadsort) which is a simplified implementation of quadsort.
 
 Finish
 ------
-Once all elements have been inserted into the grid, all unsorted buckets are sorted. Since the buckets are already in order the sort is finished.
+Once all elements have been inserted into the grid every bucket receives a final sort and is copied back to the original array.
 
 Big O
 -----
@@ -40,7 +40,6 @@ Gridsort makes n comparisons when the data is fully in order or in reverse order
 
 Visualization
 -------------
-
 In the visualization below one test is performed on a random distribution.
 
 Cyan numbers are unsorted, green numbers are sorted, white numbers are sorted and ready to be
@@ -82,4 +81,3 @@ The source code was compiled using gcc -O3 bench.c.
 |           |          |      |          |          |             |                  |
 |     qsort |   100000 |  i32 | 0.003006 | 0.003468 |     1209200 |           stable |
 |  gridsort |   100000 |  i32 | 0.001790 | 0.002116 |      817453 |           stable |
-
