@@ -50,8 +50,40 @@ to insert the next number, magenta numbers are ready to be merged back to the ma
 
 Benchmarks
 ----------
+The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
+The source code was compiled using g++ -O3 -w -fpermissive bench.c. 
+
+|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
+| std::sort |  1000000 |  i32 | 0.065500 | 0.065702 |           1 |     random order |
+|  gridsort |  1000000 |  i32 | 0.053416 | 0.053664 |           1 |     random order |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.011227 | 0.011732 |           1 |  ascending order |
+|  gridsort |  1000000 |  i32 | 0.003683 | 0.003740 |           1 |  ascending order |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.034269 | 0.034431 |           1 |    ascending saw |
+|  gridsort |  1000000 |  i32 | 0.019837 | 0.019939 |           1 |    ascending saw |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.029996 | 0.030191 |           1 |    generic order |
+|  gridsort |  1000000 |  i32 | 0.016754 | 0.016966 |           1 |    generic order |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.008667 | 0.008744 |           1 | descending order |
+|  gridsort |  1000000 |  i32 | 0.005044 | 0.005114 |           1 | descending order |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.025960 | 0.026112 |           1 |   descending saw |
+|  gridsort |  1000000 |  i32 | 0.018636 | 0.018949 |           1 |   descending saw |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.045124 | 0.045274 |           1 |      random tail |
+|  gridsort |  1000000 |  i32 | 0.015710 | 0.015781 |           1 |      random tail |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.056202 | 0.056400 |           1 |      random half |
+|  gridsort |  1000000 |  i32 | 0.029229 | 0.029428 |           1 |      random half |
+|           |          |      |          |          |             |                  |
+| std::sort |  1000000 |  i32 | 0.028882 | 0.029204 |           1 |           stable |
+|  gridsort |  1000000 |  i32 | 0.017583 | 0.017796 |           1 |           stable |
+
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
-The source code was compiled using gcc -O3 bench.c.
+The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
 
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
@@ -81,3 +113,5 @@ The source code was compiled using gcc -O3 bench.c.
 |           |          |      |          |          |             |                  |
 |     qsort |   100000 |  i32 | 0.003006 | 0.003468 |     1209200 |           stable |
 |  gridsort |   100000 |  i32 | 0.001790 | 0.002116 |      817453 |           stable |
+
+
