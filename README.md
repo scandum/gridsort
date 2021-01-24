@@ -47,7 +47,7 @@ Cyan numbers are unsorted, green numbers are sorted, white numbers are sorted an
 merged, yellow numbers are the index upon which a binary search is performed to find out where
 to insert the next number, magenta numbers are ready to be merged back to the main array.
 
-![gridsort visualization](https://github.com/scandum/quadsort/blob/master/gridsort.gif)
+![gridsort visualization](https://github.com/scandum/gridsort/blob/main/gridsort.gif)
 
 Benchmarks
 ----------
