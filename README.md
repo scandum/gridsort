@@ -55,8 +55,8 @@ to insert the next number, magenta numbers are ready to be merged back to the ma
 
 In the visualization below eight tests are performed. Random, Ascending, Ascending Saw, Generic,
 Descending, Descending Saw, Random Tail, and Wave order.
-
-[![cubesort visualization](https://github.com/scandum/tailsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
+                           
+[![cubesort visualization](https://github.com/scandum/gridsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
 
 Benchmarks
 ----------
