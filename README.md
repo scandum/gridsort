@@ -9,19 +9,17 @@ Gridsort sorts data by storing data in a simplified [binary cube](https://github
 
 Boundless Binary Search
 -----------------------
-In order to sort an element a [boundless binary search](https://github.com/scandum/binary_search) is performed to pin point the bucket where the element should be stored. The binary search is optimized to speed up searches at the start or the end of the index. A boundless binary search is up to two times faster than the legacy binary search used by most applications.
+The first step when sorting an element is a [boundless binary search](https://github.com/scandum/binary_search) to pin point the bucket where the element should be stored. A boundless binary search is up to two times faster than the legacy binary search used by most applications. The binary search is optimized to speed up searches at the start or the end of the index. Each element is added to the end of the bucket.
 
 Quadsort
 --------
-Once a bucket overflows it is sorted using [quadsort](https://github.com/scandum/quadsort) and the content is split between two buckets. People wanting to port gridsort might want to use [tailsort](https://github.com/scandum/quadsort) which is a simplified implementation of quadsort. Quadsort has exceptional performance when sorting arrays with fewer than 1000 elements.
+Once a bucket overflows it is sorted using [quadsort](https://github.com/scandum/quadsort) and a new bucket is created. The sorted data is split between the two buckets so each bucket is half full.
+
+Quadsort has exceptional performance when sorting arrays with fewer than 1000 elements. People wanting to port gridsort might want to use [tailsort](https://github.com/scandum/quadsort) instead which is a simplified implementation of quadsort.
 
 Finish
 ------
 Once all elements have been inserted into the binary cube every bucket receives a final sort and is copied back to the original array.
-
-Performance
------------
-Gridsort has excellent performance which is a combination of using the boundless binary search algorithm for n log n pivot finding, the quadsort sorting algorithm for adaptive  sorting, and a simplified binary cube data structure with good cache utilization.
 
 Big O
 -----
