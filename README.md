@@ -95,31 +95,32 @@ The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the be
 
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-|     qsort |   100000 |  i32 | 0.008679 | 0.008971 |     1536634 |     random order |
-|  gridsort |   100000 |  i32 | 0.006399 | 0.006681 |     1640493 |     random order |
+|     qsort |   100000 |  i32 | 0.008652 | 0.008873 |     1536226 |     random order |
+|  gridsort |   100000 |  i32 | 0.006340 | 0.006469 |     1649235 |     random order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002283 | 0.002475 |      815024 |  ascending order |
-|  gridsort |   100000 |  i32 | 0.000507 | 0.000520 |      200086 |  ascending order |
+|     qsort |   100000 |  i32 | 0.002278 | 0.002463 |      815024 |  ascending order |
+|  gridsort |   100000 |  i32 | 0.000542 | 0.000549 |      202097 |  ascending order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.003076 | 0.003273 |      915019 |    ascending saw |
-|  gridsort |   100000 |  i32 | 0.002468 | 0.002667 |      920331 |    ascending saw |
+|     qsort |   100000 |  i32 | 0.003065 | 0.003181 |      915016 |    ascending saw |
+|  gridsort |   100000 |  i32 | 0.002765 | 0.002791 |      997908 |    ascending saw |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.008673 | 0.008983 |     1536164 |    generic order |
-|  gridsort |   100000 |  i32 | 0.006374 | 0.006599 |     1632479 |    generic order |
+|     qsort |   100000 |  i32 | 0.006411 | 0.006618 |     1532490 |    generic order |
+|  gridsort |   100000 |  i32 | 0.002723 | 0.002783 |     1145540 |    generic order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002303 | 0.002504 |      853904 | descending order |
-|  gridsort |   100000 |  i32 | 0.000506 | 0.000514 |      199329 | descending order |
+|     qsort |   100000 |  i32 | 0.002304 | 0.002404 |      853904 | descending order |
+|  gridsort |   100000 |  i32 | 0.000561 | 0.000573 |      200036 | descending order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002749 | 0.002951 |     1063907 |   descending saw |
-|  gridsort |   100000 |  i32 | 0.002247 | 0.002459 |     1154496 |   descending saw |
+|     qsort |   100000 |  i32 | 0.002735 | 0.002881 |     1063907 |   descending saw |
+|  gridsort |   100000 |  i32 | 0.002621 | 0.002692 |     1267256 |   descending saw |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.003918 | 0.004151 |     1012028 |      random tail |
-|  gridsort |   100000 |  i32 | 0.002040 | 0.002072 |      626374 |      random tail |
+|     qsort |   100000 |  i32 | 0.003904 | 0.004122 |     1012031 |      random tail |
+|  gridsort |   100000 |  i32 | 0.002060 | 0.002078 |      627248 |      random tail |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.005686 | 0.005928 |     1200835 |      random half |
-|  gridsort |   100000 |  i32 | 0.003732 | 0.003840 |     1004035 |      random half |
+|     qsort |   100000 |  i32 | 0.005647 | 0.005843 |     1200664 |      random half |
+|  gridsort |   100000 |  i32 | 0.003627 | 0.003655 |      999069 |      random half |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.003006 | 0.003468 |     1209200 |           stable |
-|  gridsort |   100000 |  i32 | 0.001790 | 0.002116 |      817453 |           stable |
+|     qsort |   100000 |  i32 | 0.002996 | 0.003387 |     1209200 |           stable |
+|  gridsort |   100000 |  i32 | 0.002067 | 0.002110 |      917156 |           stable |
+
 
 
