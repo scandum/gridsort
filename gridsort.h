@@ -27,28 +27,26 @@
 */
 
 /*
-	gridsort 1.1.1.1
+	gridsort 1.1.1.2
 */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <assert.h>
+#include <errno.h>
 
 #ifndef QUADSORT_H
   #include "quadsort.h"
-#endif
-
-#ifndef QUADSORT_CPY_H
-  #include "quadsort_cpy.h"
 #endif
 
 //#define cmp(a,b) (*(a) > *(b))
 
 typedef int CMPFUNC (const void *a, const void *b);
 
-#define BSC_X 16
+#define BSC_X 64
+#define BSC_Y 2
 
-#define BSC_Z 1024
+size_t  BSC_Z;
 
 //typedef int CMPFUNC (const void *a, const void *b);
 
@@ -65,6 +63,7 @@ typedef int CMPFUNC (const void *a, const void *b);
 
 struct x_node32
 {
+	int *swap;
 	size_t y_size;
 	size_t y;
 	int *y_base;
@@ -73,121 +72,262 @@ struct x_node32
 
 struct y_node32
 {
-	unsigned short z_size;
-	unsigned short z_sort;
-	int z_axis[BSC_Z];
+	size_t z_size;
+	int *z_axis1;
+	int *z_axis2;
 };
 
-struct y_node32 *split_y_node32(struct x_node32 *x_node, unsigned short y, CMPFUNC *cmp);
+void split_y_node32(struct x_node32 *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp);
 
-struct x_node32 *create_grid32(int *array, size_t nmemb)
+struct x_node32 *create_grid32(int *array, size_t nmemb, CMPFUNC *cmp)
 {
-	struct x_node32 *x_node = (struct x_node32 *) calloc(1, sizeof(struct x_node32));
+	struct x_node32 *x_node = (struct x_node32 *) malloc(sizeof(struct x_node32));
+	struct y_node32 *y_node = (struct y_node32 *) malloc(sizeof(struct y_node32));
 
-	x_node->y_base = malloc(BSC_X * sizeof(int));
-	x_node->y_axis = malloc(BSC_X * sizeof(struct y_node32 *));
+	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z * BSC_Y < nmemb ; BSC_Z *= 2);
 
-	x_node->y_axis[0] = (struct y_node32 *) malloc(sizeof(struct y_node32));
+	x_node->swap = (int *) malloc(BSC_Z * sizeof(int));
 
-	x_node->y_size = x_node->y_axis[0]->z_size = x_node->y_axis[0]->z_sort = 1;
+	x_node->y_base = (int *) malloc(BSC_X * sizeof(int));
+	x_node->y_axis = (struct y_node32 **) malloc(BSC_X * sizeof(struct y_node32 *));
 
-	x_node->y_axis[0]->z_axis[0] = x_node->y_base[0] = array[0];
+	x_node->y_axis[0] = y_node;
 
+	// avoid pointless binary searches by creating two y nodes right away
+
+	if (quad_swap32(array, BSC_Z * 2, cmp) == 0)
+	{
+		quad_merge32(array, x_node->swap, BSC_Z * 2, 16, cmp);
+	}
+
+	y_node->z_axis1 = (int *) malloc(BSC_Z * sizeof(int));
+	memcpy(y_node->z_axis1, array, BSC_Z * sizeof(int));
+
+	y_node->z_axis2 = (int *) malloc(BSC_Z * sizeof(int));
+	memcpy(y_node->z_axis2, array + BSC_Z, BSC_Z * sizeof(int));
+
+	x_node->y_size = 1;
 	x_node->y = 0;
+
+	x_node->y_base[0] = y_node->z_axis1[0];
+
+	y_node->z_size = BSC_Z;
+
+	split_y_node32(x_node, 0, 1, cmp);
 
 	return x_node;
 }
 
-void bulksort32_cpy(int *dest, int *array, unsigned short nmemb, unsigned short sort, CMPFUNC *cmp)
+// merge two sorted arrays
+
+void twin_merge32(int *swap, struct y_node32 *y_node, CMPFUNC *cmp)
 {
-	int swap32[BSC_Z / 2];
-	unsigned short diff;
+	register int *pta, *ptb, *tpa, *tpb, *pts, *tps;
 
-	if (sort >= nmemb / 2)
+	pta = y_node->z_axis1;
+	ptb = y_node->z_axis2;
+	tpa = pta + BSC_Z - 1;
+	tpb = ptb + BSC_Z - 1;
+
+	if (cmp(tpa, ptb) <= 0)
 	{
-		diff = nmemb - sort;
+		return;
+	}
+
+	if (cmp(pta, tpb) > 0)
+	{
+		pta = y_node->z_axis1;
+		y_node->z_axis1 = y_node->z_axis2;
+		y_node->z_axis2 = pta;
+
+		return;
+	}
+
+	while (cmp(pta, ptb) <= 0)
+	{
+		pta++;
+	}
+
+	tps = pta;
+	pts = swap;
+
+	while (tps <= tpa)
+	{
+		*pts++ = *tps++;
+	}
+
+	tps = pts - 1;
+	pts = swap;
+
+	*pta++ = *ptb++;
+
+	while (pta <= tpa)
+	{
+		*pta++ = cmp(pts, ptb) > 0 ? *ptb++ : *pts++;
+	}
+
+	pta = y_node->z_axis2;
+
+	if (cmp(tps, tpb) <= 0)
+	{
+		while (pts <= tps)
+		{
+			while (cmp(pts, ptb) > 0)
+			{
+				*pta++ = *ptb++;
+			}
+			*pta++ = *pts++;
+		}
 	}
 	else
 	{
-		diff = nmemb;
-		sort = 0;
-	}
+		while (ptb <= tpb)
+		{
+			while (cmp(pts, ptb) <= 0)
+			{
+				*pta++ = *pts++;
+			}
+			*pta++ = *ptb++;
+		}
 
-	if (diff > 128)
-	{
-		if (quad_swap32(array + sort, diff, cmp) == 0)
+		while (pts <= tps)
 		{
-			quad_merge32(array + sort, swap32, diff, 16, cmp);
-		}
-	}
-	else if (diff > 16)
-	{
-		if (quad_swap32(array + sort, diff, cmp) == 0)
-		{
-			tail_merge32(array + sort, swap32, diff, 16, cmp);
-		}
-	}
-	else
-	{
-		tail_swap32(array + sort, diff, cmp);
-	}
-
-	if (dest)
-	{
-		if (sort)
-		{
-			tail_merge32_cpy(dest, array, nmemb, sort, cmp);
-		}
-		else
-		{
-			memcpy(dest, array, nmemb * sizeof(int));
-		}
-	}
-	else
-	{
-		if (sort)
-		{
-			tail_merge32(array, swap32, nmemb, sort, cmp);
+			*pta++ = *pts++;
 		}
 	}
 }
 
-size_t adaptive_binary_search32(struct x_node32 *x_node, int *array, size_t array_size, int key, CMPFUNC *cmp)
+
+void twin_merge32_cpy(int *dest, struct y_node32 *y_node, size_t nmemb1, size_t nmemb2, CMPFUNC *cmp)
 {
-	size_t bot, top, mid;
+	register int *pta, *ptb, *tpa, *tpb;
 
-	bot = x_node->y;
+	pta = y_node->z_axis1;
+	ptb = y_node->z_axis2;
+	tpa = pta + nmemb1 - 1;
+	tpb = ptb + nmemb2 - 1;
 
-	if (bot == x_node->y_size - 1)
+	if (cmp(tpa, ptb) <= 0)
 	{
-		if (cmp(&array[bot], &key) <= 0)
+		memcpy(dest, pta, nmemb1 * sizeof(int));
+
+		dest += nmemb1;
+
+		memcpy(dest, ptb, nmemb2 * sizeof(int));
+
+		return;
+	}
+
+	if (cmp(tpa, tpb) <= 0)
+	{
+		while (pta <= tpa)
 		{
-			return bot;
+			while (cmp(pta, ptb) > 0)
+			{
+				*dest++ = *ptb++;
+			}
+			*dest++ = *pta++;
 		}
-		top = bot;
+
+		while (ptb <= tpb)
+		{
+			*dest++ = *ptb++;
+		}
 	}
 	else
 	{
-		if (bot == 0 && cmp(&array[0], &key) > 0)
+		while (ptb <= tpb)
+		{
+			while (cmp(pta, ptb) <= 0)
+			{
+				*dest++ = *pta++;
+			}
+			*dest++ = *ptb++;
+		}
+
+		while (pta <= tpa)
+		{
+			*dest++ = *pta++;
+		}
+	}
+}
+
+// y_node->z_axis1 should be sorted and of BSC_Z size.
+// y_node->z_axis2 should be unsorted and of y_node->z_size size.
+
+void bulksort32_cpy(struct x_node32 *x_node, int *dest, struct y_node32 *y_node, CMPFUNC *cmp)
+{
+	if (y_node->z_size > 128)
+	{
+		if (quad_swap32(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			quad_merge32(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else if (y_node->z_size > 16)
+	{
+		if (quad_swap32(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			tail_merge32(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else
+	{
+		tail_swap32(y_node->z_axis2, y_node->z_size, cmp);
+	}
+
+	if (dest)
+	{
+		twin_merge32_cpy(dest, y_node, BSC_Z, y_node->z_size, cmp);
+	}
+	else if (y_node->z_axis1)
+	{
+		twin_merge32(x_node->swap, y_node, cmp);
+	}
+}
+
+
+size_t adaptive_binary_search32(struct x_node32 *x_node, int *array, int key, CMPFUNC *cmp)
+{
+	size_t top, mid;
+	int *base = array;
+
+	if (x_node->y == x_node->y_size - 1)
+	{
+		if (cmp(&array[x_node->y], &key) <= 0)
+		{
+			return x_node->y;
+		}
+		top = x_node->y;
+	}
+	else if (x_node->y == 0)
+	{
+		base++;
+
+		if (cmp(base, &key) > 0)
 		{
 			return 0;
 		}
-		top = array_size;
+		top = x_node->y_size - 1;
 	}
-	bot = 0;
+	else
+	{
+		top = x_node->y_size;
+	}
 
 	while (top > 1)
 	{
 		mid = top / 2;
 
-		if (cmp(&array[bot + mid], &key) <= 0)
+		if (cmp(base + mid, &key) <= 0)
 		{
-			bot += mid;
+			base += mid;
 		}
 		top -= mid;
 	}
-	return x_node->y = bot;
+	return x_node->y = base - array;
 }
+
 
 void destroy_grid32(struct x_node32 *x_node, int *array, CMPFUNC *cmp)
 {
@@ -202,15 +342,18 @@ void destroy_grid32(struct x_node32 *x_node, int *array, CMPFUNC *cmp)
 		{
 			y_node = x_node->y_axis[y];
 
-			if (y_node->z_sort != y_node->z_size)
+			if (y_node->z_size)
 			{
-				bulksort32_cpy(&array[z_len], y_node->z_axis, y_node->z_size, y_node->z_sort, cmp);
+				bulksort32_cpy(x_node, &array[z_len], y_node, cmp);
 			}
 			else
 			{
-				memcpy(&array[z_len], y_node->z_axis, y_node->z_size * sizeof(int));
+				memcpy(&array[z_len], y_node->z_axis1, BSC_Z * sizeof(int));
 			}
-			z_len += y_node->z_size;
+			z_len += BSC_Z + y_node->z_size;
+
+			free(y_node->z_axis1);
+			free(y_node->z_axis2);
 
 			free(y_node);
 		}
@@ -221,22 +364,24 @@ void destroy_grid32(struct x_node32 *x_node, int *array, CMPFUNC *cmp)
 	free(x_node);
 }
 
+
 void insert_z_node32(struct x_node32 *x_node, int key, CMPFUNC *cmp)
 {
 	struct y_node32 *y_node;
-	unsigned short y;
+	size_t y;
 
-	y = adaptive_binary_search32(x_node, x_node->y_base, x_node->y_size, key, cmp);
+	y = adaptive_binary_search32(x_node, x_node->y_base, key, cmp);
 
 	y_node = x_node->y_axis[y];
 
-	y_node->z_axis[y_node->z_size++] = key;
+	y_node->z_axis2[y_node->z_size++] = key;
 
 	if (y_node->z_size == BSC_Z)
 	{
-		split_y_node32(x_node, y, cmp);
+		split_y_node32(x_node, y, y + 1, cmp);
 	}
 }
+
 
 void insert_y_node32(struct x_node32 *x_node, unsigned short y)
 {
@@ -254,31 +399,36 @@ void insert_y_node32(struct x_node32 *x_node, unsigned short y)
 		x_node->y_base[end] = x_node->y_base[end - 1];
 	}
 	x_node->y_axis[y] = (struct y_node32 *) malloc(sizeof(struct y_node32));
+
+	x_node->y_axis[y]->z_axis1 = (int *) malloc(BSC_Z * sizeof(int));
+	x_node->y_axis[y]->z_axis2 = (int *) malloc(BSC_Z * sizeof(int));
 }
 
-struct y_node32 *split_y_node32(struct x_node32 *x_node, unsigned short y, CMPFUNC *cmp)
+
+void split_y_node32(struct x_node32 *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp)
 {
 	struct y_node32 *y_node1, *y_node2;
+	int *swap;
 
-	insert_y_node32(x_node, y + 1);
+	insert_y_node32(x_node, y2);
 
-	y_node1 = x_node->y_axis[y];
-	y_node2 = x_node->y_axis[y + 1];
+	y_node1 = x_node->y_axis[y1];
+	y_node2 = x_node->y_axis[y2];
 
-	bulksort32_cpy(NULL, y_node1->z_axis, y_node1->z_size, y_node1->z_sort, cmp);
+	if (x_node->y_size > 2)
+	{
+		bulksort32_cpy(x_node, NULL, y_node1, cmp);
+	}
 
-	y_node2->z_sort = y_node2->z_size = (y == 0) ? BSC_Z - 1 : BSC_Z / 2;
+	y_node1->z_size = y_node2->z_size = 0;
 
-	y_node1->z_sort = y_node1->z_size = BSC_Z - y_node2->z_size;
+	swap = y_node2->z_axis1; y_node2->z_axis1 = y_node1->z_axis2; y_node1->z_axis2 = swap;
 
-	x_node->y_base[y + 0] = y_node1->z_axis[0];
-	x_node->y_base[y + 1] = y_node1->z_axis[y_node1->z_size];
-
-	memcpy(y_node2->z_axis, y_node1->z_axis + y_node1->z_size, y_node2->z_size * sizeof(int));
-
-	return x_node->y_axis[y];
+	x_node->y_base[y1] = y_node1->z_axis1[0];
+	x_node->y_base[y2] = y_node2->z_axis1[0];
 }
 
+// identical to 32 bit version except that int has been changed to long long
 
 ///////////////////////////////////////////////////////
 // ┌────────────────────────────────────────────────┐//
@@ -293,6 +443,7 @@ struct y_node32 *split_y_node32(struct x_node32 *x_node, unsigned short y, CMPFU
 
 struct x_node64
 {
+	long long *swap;
 	size_t y_size;
 	size_t y;
 	long long *y_base;
@@ -301,121 +452,261 @@ struct x_node64
 
 struct y_node64
 {
-	unsigned short z_size;
-	unsigned short z_sort;
-	long long z_axis[BSC_Z];
+	size_t z_size;
+	long long *z_axis1;
+	long long *z_axis2;
 };
 
-struct y_node64 *split_y_node64(struct x_node64 *x_node, unsigned short y, CMPFUNC *cmp);
+void split_y_node64(struct x_node64 *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp);
 
-struct x_node64 *create_grid64(long long *array, size_t nmemb)
+struct x_node64 *create_grid64(long long *array, size_t nmemb, CMPFUNC *cmp)
 {
-	struct x_node64 *x_node = (struct x_node64 *) calloc(1, sizeof(struct x_node64));
+	struct x_node64 *x_node = (struct x_node64 *) malloc(sizeof(struct x_node64));
+	struct y_node64 *y_node = (struct y_node64 *) malloc(sizeof(struct y_node64));
 
-	x_node->y_base = malloc(BSC_X * sizeof(long long));
-	x_node->y_axis = malloc(BSC_X * sizeof(struct y_node64 *));
+	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z * BSC_Y < nmemb ; BSC_Z *= 2);
 
-	x_node->y_axis[0] = (struct y_node64 *) malloc(sizeof(struct y_node64));
+	x_node->swap = (long long *) malloc(BSC_Z * sizeof(long long));
 
-	x_node->y_size = x_node->y_axis[0]->z_size = x_node->y_axis[0]->z_sort = 1;
+	x_node->y_base = (long long *) malloc(BSC_X * sizeof(long long));
+	x_node->y_axis = (struct y_node64 **) malloc(BSC_X * sizeof(struct y_node64 *));
 
-	x_node->y_axis[0]->z_axis[0] = x_node->y_base[0] = array[0];
+	x_node->y_axis[0] = y_node;
 
+	if (quad_swap64(array, BSC_Z * 2, cmp) == 0)
+	{
+		quad_merge64(array, x_node->swap, BSC_Z * 2, 16, cmp);
+	}
+
+	y_node->z_axis1 = (long long *) malloc(BSC_Z * sizeof(long long));
+	memcpy(y_node->z_axis1, array, BSC_Z * sizeof(long long));
+
+	y_node->z_axis2 = (long long *) malloc(BSC_Z * sizeof(long long));
+	memcpy(y_node->z_axis2, array + BSC_Z, BSC_Z * sizeof(long long));
+
+	x_node->y_size = 1;
 	x_node->y = 0;
+
+	x_node->y_base[0] = y_node->z_axis1[0];
+
+	y_node->z_size = BSC_Z;
+
+	split_y_node64(x_node, 0, 1, cmp);
 
 	return x_node;
 }
 
-void bulksort64_cpy(long long *dest, long long *array, unsigned short nmemb, unsigned short sort, CMPFUNC *cmp)
+// merge two sorted arrays
+
+void twin_merge64(long long *swap, struct y_node64 *y_node, CMPFUNC *cmp)
 {
-	long long swap64[BSC_Z / 2];
-	unsigned short diff;
+	register long long *pta, *ptb, *tpa, *tpb, *pts, *tps;
 
-	if (sort >= nmemb / 2)
+	pta = y_node->z_axis1;
+	ptb = y_node->z_axis2;
+	tpa = pta + BSC_Z - 1;
+	tpb = ptb + BSC_Z - 1;
+
+	if (cmp(tpa, ptb) <= 0)
 	{
-		diff = nmemb - sort;
+		return;
+	}
+
+	if (cmp(pta, tpb) > 0)
+	{
+		pta = y_node->z_axis1;
+		y_node->z_axis1 = y_node->z_axis2;
+		y_node->z_axis2 = pta;
+
+		return;
+	}
+
+	while (cmp(pta, ptb) <= 0)
+	{
+		pta++;
+	}
+
+	tps = pta;
+	pts = swap;
+
+	while (tps <= tpa)
+	{
+		*pts++ = *tps++;
+	}
+
+	tps = pts - 1;
+	pts = swap;
+
+	*pta++ = *ptb++;
+
+	while (pta <= tpa)
+	{
+		*pta++ = cmp(pts, ptb) > 0 ? *ptb++ : *pts++;
+	}
+
+	pta = y_node->z_axis2;
+
+	if (cmp(tps, tpb) <= 0)
+	{
+		while (pts <= tps)
+		{
+			while (cmp(pts, ptb) > 0)
+			{
+				*pta++ = *ptb++;
+			}
+			*pta++ = *pts++;
+		}
 	}
 	else
 	{
-		diff = nmemb;
-		sort = 0;
-	}
+		while (ptb <= tpb)
+		{
+			while (cmp(pts, ptb) <= 0)
+			{
+				*pta++ = *pts++;
+			}
+			*pta++ = *ptb++;
+		}
 
-	if (diff > 128)
-	{
-		if (quad_swap64(array + sort, diff, cmp) == 0)
+		while (pts <= tps)
 		{
-			quad_merge64(array + sort, swap64, diff, 16, cmp);
-		}
-	}
-	else if (diff > 16)
-	{
-		if (quad_swap64(array + sort, diff, cmp) == 0)
-		{
-			tail_merge64(array + sort, swap64, diff, 16, cmp);
-		}
-	}
-	else
-	{
-		tail_swap64(array + sort, diff, cmp);
-	}
-
-	if (dest)
-	{
-		if (sort)
-		{
-			tail_merge64_cpy(dest, array, nmemb, sort, cmp);
-		}
-		else
-		{
-			memcpy(dest, array, nmemb * sizeof(long long));
-		}
-	}
-	else
-	{
-		if (sort)
-		{
-			tail_merge64(array, swap64, nmemb, sort, cmp);
+			*pta++ = *pts++;
 		}
 	}
 }
 
-size_t adaptive_binary_search64(struct x_node64 *x_node, long long *array, size_t array_size, long long key, CMPFUNC *cmp)
+
+void twin_merge64_cpy(long long *dest, struct y_node64 *y_node, size_t nmemb1, size_t nmemb2, CMPFUNC *cmp)
 {
-	size_t bot, top, mid;
+	register long long *pta, *ptb, *tpa, *tpb;
 
-	bot = x_node->y;
+	pta = y_node->z_axis1;
+	ptb = y_node->z_axis2;
+	tpa = pta + nmemb1 - 1;
+	tpb = ptb + nmemb2 - 1;
 
-	if (bot == x_node->y_size - 1)
+	if (cmp(tpa, ptb) <= 0)
 	{
-		if (cmp(&array[bot], &key) <= 0)
+		memcpy(dest, pta, nmemb1 * sizeof(long long));
+
+		dest += nmemb1;
+
+		memcpy(dest, ptb, nmemb2 * sizeof(long long));
+
+		return;
+	}
+
+	if (cmp(tpa, tpb) <= 0)
+	{
+		while (pta <= tpa)
 		{
-			return bot;
+			while (cmp(pta, ptb) > 0)
+			{
+				*dest++ = *ptb++;
+			}
+			*dest++ = *pta++;
 		}
-		top = bot;
+
+		while (ptb <= tpb)
+		{
+			*dest++ = *ptb++;
+		}
 	}
 	else
 	{
-		if (bot == 0 && cmp(&array[0], &key) > 0)
+		while (ptb <= tpb)
+		{
+			while (cmp(pta, ptb) <= 0)
+			{
+				*dest++ = *pta++;
+			}
+			*dest++ = *ptb++;
+		}
+
+		while (pta <= tpa)
+		{
+			*dest++ = *pta++;
+		}
+	}
+}
+
+// y_node->z_axis1 should be sorted and of BSC_Z size.
+// y_node->z_axis2 should be unsorted and of y_node->z_size size.
+
+void bulksort64_cpy(struct x_node64 *x_node, long long *dest, struct y_node64 *y_node, CMPFUNC *cmp)
+{
+	if (y_node->z_size > 128)
+	{
+		if (quad_swap64(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			quad_merge64(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else if (y_node->z_size > 16)
+	{
+		if (quad_swap64(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			tail_merge64(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else
+	{
+		tail_swap64(y_node->z_axis2, y_node->z_size, cmp);
+	}
+
+	if (dest)
+	{
+		twin_merge64_cpy(dest, y_node, BSC_Z, y_node->z_size, cmp);
+	}
+	else if (y_node->z_axis1)
+	{
+		twin_merge64(x_node->swap, y_node, cmp);
+	}
+}
+
+
+size_t adaptive_binary_search64(struct x_node64 *x_node, long long *array, long long key, CMPFUNC *cmp)
+{
+	size_t top, mid;
+	long long *base = array;
+
+	if (x_node->y == x_node->y_size - 1)
+	{
+		if (cmp(&array[x_node->y], &key) <= 0)
+		{
+			return x_node->y;
+		}
+		top = x_node->y;
+	}
+	else if (x_node->y == 0)
+	{
+		base++;
+
+		if (cmp(base, &key) > 0)
 		{
 			return 0;
 		}
-		top = array_size;
+		top = x_node->y_size - 1;
 	}
-	bot = 0;
+	else
+	{
+		top = x_node->y_size;
+	}
 
 	while (top > 1)
 	{
 		mid = top / 2;
 
-		if (cmp(&array[bot + mid], &key) <= 0)
+		if (cmp(base + mid, &key) <= 0)
 		{
-			bot += mid;
+			base += mid;
 		}
 		top -= mid;
 	}
-	return x_node->y = bot;
+
+	return x_node->y = base - array;
 }
+
 
 void destroy_grid64(struct x_node64 *x_node, long long *array, CMPFUNC *cmp)
 {
@@ -430,15 +721,18 @@ void destroy_grid64(struct x_node64 *x_node, long long *array, CMPFUNC *cmp)
 		{
 			y_node = x_node->y_axis[y];
 
-			if (y_node->z_sort != y_node->z_size)
+			if (y_node->z_size)
 			{
-				bulksort64_cpy(&array[z_len], y_node->z_axis, y_node->z_size, y_node->z_sort, cmp);
+				bulksort64_cpy(x_node, &array[z_len], y_node, cmp);
 			}
 			else
 			{
-				memcpy(&array[z_len], y_node->z_axis, y_node->z_size * sizeof(long long));
+				memcpy(&array[z_len], y_node->z_axis1, BSC_Z * sizeof(long long));
 			}
-			z_len += y_node->z_size;
+			z_len += BSC_Z + y_node->z_size;
+
+			free(y_node->z_axis1);
+			free(y_node->z_axis2);
 
 			free(y_node);
 		}
@@ -449,22 +743,24 @@ void destroy_grid64(struct x_node64 *x_node, long long *array, CMPFUNC *cmp)
 	free(x_node);
 }
 
+
 void insert_z_node64(struct x_node64 *x_node, long long key, CMPFUNC *cmp)
 {
 	struct y_node64 *y_node;
-	unsigned short y;
+	size_t y;
 
-	y = adaptive_binary_search64(x_node, x_node->y_base, x_node->y_size, key, cmp);
+	y = adaptive_binary_search64(x_node, x_node->y_base, key, cmp);
 
 	y_node = x_node->y_axis[y];
 
-	y_node->z_axis[y_node->z_size++] = key;
+	y_node->z_axis2[y_node->z_size++] = key;
 
 	if (y_node->z_size == BSC_Z)
 	{
-		split_y_node64(x_node, y, cmp);
+		split_y_node64(x_node, y, y + 1, cmp);
 	}
 }
+
 
 void insert_y_node64(struct x_node64 *x_node, unsigned short y)
 {
@@ -482,29 +778,33 @@ void insert_y_node64(struct x_node64 *x_node, unsigned short y)
 		x_node->y_base[end] = x_node->y_base[end - 1];
 	}
 	x_node->y_axis[y] = (struct y_node64 *) malloc(sizeof(struct y_node64));
+
+	x_node->y_axis[y]->z_axis1 = (long long *) malloc(BSC_Z * sizeof(long long));
+	x_node->y_axis[y]->z_axis2 = (long long *) malloc(BSC_Z * sizeof(long long));
 }
 
-struct y_node64 *split_y_node64(struct x_node64 *x_node, unsigned short y, CMPFUNC *cmp)
+
+void split_y_node64(struct x_node64 *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp)
 {
 	struct y_node64 *y_node1, *y_node2;
+	long long *swap;
 
-	insert_y_node64(x_node, y + 1);
+	insert_y_node64(x_node, y2);
 
-	y_node1 = x_node->y_axis[y];
-	y_node2 = x_node->y_axis[y + 1];
+	y_node1 = x_node->y_axis[y1];
+	y_node2 = x_node->y_axis[y2];
 
-	bulksort64_cpy(NULL, y_node1->z_axis, y_node1->z_size, y_node1->z_sort, cmp);
+	if (x_node->y_size > 2)
+	{
+		bulksort64_cpy(x_node, NULL, y_node1, cmp);
+	}
 
-	y_node2->z_sort = y_node2->z_size = (y == 0) ? BSC_Z - 1 : BSC_Z / 2;
+	y_node1->z_size = y_node2->z_size = 0;
 
-	y_node1->z_sort = y_node1->z_size = BSC_Z - y_node2->z_size;
+	swap = y_node2->z_axis1; y_node2->z_axis1 = y_node1->z_axis2; y_node1->z_axis2 = swap;
 
-	x_node->y_base[y + 0] = y_node1->z_axis[0];
-	x_node->y_base[y + 1] = y_node1->z_axis[y_node1->z_size];
-
-	memcpy(y_node2->z_axis, y_node1->z_axis + y_node1->z_size, y_node2->z_size * sizeof(long long));
-
-	return x_node->y_axis[y];
+	x_node->y_base[y1] = y_node1->z_axis1[0];
+	x_node->y_base[y2] = y_node2->z_axis1[0];
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -522,16 +822,19 @@ void gridsort(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
 {
 	size_t cnt = nmemb;
 
-	if (nmemb < 2)
+	if (nmemb < BSC_X * BSC_X)
 	{
-		return;
+		return quadsort(array, nmemb, size, cmp);
 	}
 
 	if (size == sizeof(int))
 	{
 		int *pta = (int *) array;
 
-		struct x_node32 *grid = create_grid32(pta++, cnt--);
+		struct x_node32 *grid = create_grid32(pta, cnt, cmp);
+
+		pta += BSC_Z * 2;
+		cnt -= BSC_Z * 2;
 
 		while (cnt--)
 		{
@@ -544,7 +847,10 @@ void gridsort(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
 	{
 		long long *pta = (long long *) array;
 
-		struct x_node64 *grid = create_grid64(pta++, cnt--);
+		struct x_node64 *grid = create_grid64(pta, cnt, cmp);
+
+		pta += BSC_Z * 2;
+		cnt -= BSC_Z * 2;
 
 		while (cnt--)
 		{
