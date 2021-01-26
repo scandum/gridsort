@@ -1,25 +1,27 @@
 Intro
 -----
-This document describes a partitioning stable comparison sort named 
-sort. It is a simplified version of cubesort, intended to be helpful for people wanting to understand or port the code.
+This document describes a partitioning stable comparison-based sort named 
+gridsort.
 
 Binary Cube
 -----------
-Gridsort sorts data by storing data in a simplified [binary cube](https://github.com/scandum/binary_cube), a multidimentional sorted array. The binary cube offers excellent cache utilization.
+Gridsort sorts data by storing data in a simplified [binary cube](https://github.com/scandum/binary_cube), a multidimentional sorted array. The binary cube offers excellent cache utilization. It's easiest to view a binary cube as a hash table, but instead of a hash function to find a bucket it uses a binary search on a lookup table.
 
 Boundless Binary Search
 -----------------------
-The first step when sorting an element is a [boundless binary search](https://github.com/scandum/binary_search) to pin point the bucket where the element should be stored. A boundless binary search is up to two times faster than the legacy binary search used by most applications. The binary search is optimized to speed up searches at the start or the end of the index. Each element is added to the end of the bucket.
+The first step when sorting an element is a [boundless binary search](https://github.com/scandum/binary_search) to pin point the bucket where the element should be stored. A boundless binary search is up to two times faster than the legacy binary search used by most applications. Once a bucket is found the element is added to the end of the bucket.
 
 Quadsort
 --------
-Once a bucket overflows it is sorted using [quadsort](https://github.com/scandum/quadsort) and a new bucket is created. The sorted data is split between the two buckets so each bucket is half full.
-
-Quadsort has exceptional performance when sorting arrays with fewer than 1000 elements. People wanting to port gridsort might want to use [tailsort](https://github.com/scandum/quadsort) instead which is a simplified implementation of quadsort.
+Once a bucket overflows it is sorted using [quadsort](https://github.com/scandum/quadsort) and a new bucket is created. The sorted data is split between the two buckets so each bucket is half full. The lowest element in each bucket is added to the lookup table.
 
 Finish
 ------
 Once all elements have been inserted into the binary cube every bucket receives a final sort and is copied back to the original array.
+
+Data Types
+----------
+The C implementation of gridsort supports long doubles and 8, 16, 32, and 64 bit data types. By using pointers it's possible to sort any other data type.
 
 Big O
 -----
@@ -41,6 +43,10 @@ Big O
 
 Gridsort makes n comparisons when the data is fully in order or in reverse order.
 
+Porting
+-------
+People wanting to port gridsort might want to have a look at [tailsort](https://github.com/scandum/tailsort), which is a simplified implementation of quadsort. Gridsort itself is a simplified implementation of cubesort.
+
 Visualization
 -------------
 In the visualization below one test is performed on a random distribution.
@@ -53,7 +59,7 @@ to insert the next number, magenta numbers are ready to be merged back to the ma
 
 In the visualization below eight tests are performed. Random, Ascending, Ascending Saw, Generic,
 Descending, Descending Saw, Random Tail, and Wave order.
-                           
+
 [![cubesort visualization](https://github.com/scandum/gridsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
 
 Benchmarks
@@ -121,6 +127,3 @@ The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the be
 |           |          |      |          |          |             |                  |
 |     qsort |   100000 |  i32 | 0.002996 | 0.003387 |     1209200 |           stable |
 |  gridsort |   100000 |  i32 | 0.002067 | 0.002110 |      917156 |           stable |
-
-
-
