@@ -69,61 +69,83 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 
 |      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-| std::sort |  1000000 |  i32 | 0.065251 | 0.065579 |           1 |     random order |
-|  gridsort |  1000000 |  i32 | 0.053845 | 0.054123 |           1 |     random order |
+| std::sort |  1000000 |  128 | 0.110756 | 0.111165 |           1 |     random order |
+|  gridsort |  1000000 |  128 | 0.104944 | 0.105506 |           1 |     random order |
+
+|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
+| std::sort |  1000000 |   64 | 0.065638 | 0.065886 |           1 |     random order |
+|  gridsort |  1000000 |   64 | 0.054830 | 0.055245 |           1 |     random order |
+
+|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
+| std::sort |  1000000 |   32 | 0.064990 | 0.065196 |           1 |     random order |
+|  gridsort |  1000000 |   32 | 0.053937 | 0.054295 |           1 |     random order |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.011072 | 0.011364 |           1 |  ascending order |
-|  gridsort |  1000000 |  i32 | 0.003245 | 0.003337 |           1 |  ascending order |
+| std::sort |  1000000 |   32 | 0.011424 | 0.011780 |           1 |  ascending order |
+|  gridsort |  1000000 |   32 | 0.003396 | 0.003469 |           1 |  ascending order |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.033779 | 0.033952 |           1 |    ascending saw |
-|  gridsort |  1000000 |  i32 | 0.018176 | 0.018301 |           1 |    ascending saw |
+| std::sort |  1000000 |   32 | 0.033669 | 0.033935 |           1 |    ascending saw |
+|  gridsort |  1000000 |   32 | 0.013438 | 0.013535 |           1 |    ascending saw |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.030247 | 0.030533 |           1 |    generic order |
-|  gridsort |  1000000 |  i32 | 0.015128 | 0.015355 |           1 |    generic order |
+| std::sort |  1000000 |   32 | 0.030115 | 0.030396 |           1 |    generic order |
+|  gridsort |  1000000 |   32 | 0.016028 | 0.016220 |           1 |    generic order |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.008549 | 0.008759 |           1 | descending order |
-|  gridsort |  1000000 |  i32 | 0.003593 | 0.003695 |           1 | descending order |
+| std::sort |  1000000 |   32 | 0.008769 | 0.008950 |           1 | descending order |
+|  gridsort |  1000000 |   32 | 0.003706 | 0.003814 |           1 | descending order |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.026028 | 0.026215 |           1 |   descending saw |
-|  gridsort |  1000000 |  i32 | 0.017865 | 0.018191 |           1 |   descending saw |
+| std::sort |  1000000 |   32 | 0.025817 | 0.026060 |           1 |   descending saw |
+|  gridsort |  1000000 |   32 | 0.012219 | 0.012422 |           1 |   descending saw |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.044885 | 0.045100 |           1 |      random tail |
-|  gridsort |  1000000 |  i32 | 0.015727 | 0.015829 |           1 |      random tail |
+| std::sort |  1000000 |   32 | 0.044224 | 0.044493 |           1 |      random tail |
+|  gridsort |  1000000 |   32 | 0.015914 | 0.016011 |           1 |      random tail |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.056019 | 0.056235 |           1 |      random half |
-|  gridsort |  1000000 |  i32 | 0.029440 | 0.029587 |           1 |      random half |
+| std::sort |  1000000 |   32 | 0.055512 | 0.055722 |           1 |      random half |
+|  gridsort |  1000000 |   32 | 0.029508 | 0.029627 |           1 |      random half |
 |           |          |      |          |          |             |                  |
-| std::sort |  1000000 |  i32 | 0.028506 | 0.028893 |           1 |       wave order |
-|  gridsort |  1000000 |  i32 | 0.015190 | 0.015785 |           1 |       wave order |
+| std::sort |  1000000 |   32 | 0.028018 | 0.028512 |           1 |         unstable |
+|  gridsort |  1000000 |   32 | 0.012377 | 0.012522 |           1 |           stable |
+
 
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
 The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
 
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-|     qsort |   100000 |  i32 | 0.008652 | 0.008873 |     1536226 |     random order |
-|  gridsort |   100000 |  i32 | 0.006340 | 0.006469 |     1649235 |     random order |
+|     qsort |   100000 |  128 | 0.019153 | 0.020135 |     1536181 |     random order |
+|  gridsort |   100000 |  128 | 0.013082 | 0.013162 |     1645873 |     random order |
+
+|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
+|     qsort |   100000 |   64 | 0.009234 | 0.009487 |     1536491 |     random order |
+|  gridsort |   100000 |   64 | 0.006838 | 0.006893 |     1655053 |     random order |
+
+|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
+|     qsort |   100000 |   32 | 0.008624 | 0.008857 |     1536634 |     random order |
+|  gridsort |   100000 |   32 | 0.006446 | 0.006574 |     1649039 |     random order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002278 | 0.002463 |      815024 |  ascending order |
-|  gridsort |   100000 |  i32 | 0.000542 | 0.000549 |      202097 |  ascending order |
+|     qsort |   100000 |   32 | 0.002276 | 0.002438 |      815024 |  ascending order |
+|  gridsort |   100000 |   32 | 0.000697 | 0.000717 |      202485 |  ascending order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.003065 | 0.003181 |      915016 |    ascending saw |
-|  gridsort |   100000 |  i32 | 0.002765 | 0.002791 |      997908 |    ascending saw |
+|     qsort |   100000 |   32 | 0.003065 | 0.003215 |      915019 |    ascending saw |
+|  gridsort |   100000 |   32 | 0.002185 | 0.002204 |      639891 |    ascending saw |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.006411 | 0.006618 |     1532490 |    generic order |
-|  gridsort |   100000 |  i32 | 0.002723 | 0.002783 |     1145540 |    generic order |
+|     qsort |   100000 |   32 | 0.006438 | 0.006661 |     1532339 |    generic order |
+|  gridsort |   100000 |   32 | 0.002879 | 0.002920 |     1151399 |    generic order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002304 | 0.002404 |      853904 | descending order |
-|  gridsort |   100000 |  i32 | 0.000561 | 0.000573 |      200036 | descending order |
+|     qsort |   100000 |   32 | 0.002308 | 0.002514 |      853904 | descending order |
+|  gridsort |   100000 |   32 | 0.000713 | 0.000726 |      200036 | descending order |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002735 | 0.002881 |     1063907 |   descending saw |
-|  gridsort |   100000 |  i32 | 0.002621 | 0.002692 |     1267256 |   descending saw |
+|     qsort |   100000 |   32 | 0.002736 | 0.002949 |     1063907 |   descending saw |
+|  gridsort |   100000 |   32 | 0.001871 | 0.001916 |      841945 |   descending saw |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.003904 | 0.004122 |     1012031 |      random tail |
-|  gridsort |   100000 |  i32 | 0.002060 | 0.002078 |      627248 |      random tail |
+|     qsort |   100000 |   32 | 0.003904 | 0.004116 |     1012028 |      random tail |
+|  gridsort |   100000 |   32 | 0.002155 | 0.002187 |      627734 |      random tail |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.005647 | 0.005843 |     1200664 |      random half |
-|  gridsort |   100000 |  i32 | 0.003627 | 0.003655 |      999069 |      random half |
+|     qsort |   100000 |   32 | 0.005655 | 0.005864 |     1200835 |      random half |
+|  gridsort |   100000 |   32 | 0.003736 | 0.003776 |     1001698 |      random half |
 |           |          |      |          |          |             |                  |
-|     qsort |   100000 |  i32 | 0.002996 | 0.003387 |     1209200 |           stable |
-|  gridsort |   100000 |  i32 | 0.002067 | 0.002110 |      917156 |           stable |
+|     qsort |   100000 |   32 | 0.003005 | 0.003460 |     1209200 |           stable |
+|  gridsort |   100000 |   32 | 0.001975 | 0.002004 |      867862 |           stable |
+
