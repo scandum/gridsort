@@ -23,6 +23,10 @@ Data Types
 ----------
 The C implementation of gridsort supports long doubles and 8, 16, 32, and 64 bit data types. By using pointers it's possible to sort any other data type.
 
+Interface
+---------
+Gridsort uses the same interface as qsort, which is described in [man qsort](https://man7.org/linux/man-pages/man3/qsort.3p.html).
+
 Big O
 -----
 ```cobol
