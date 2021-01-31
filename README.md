@@ -49,18 +49,18 @@ People wanting to port gridsort might want to have a look at [tailsort](https://
 
 Visualization
 -------------
-In the visualization below one test is performed on a random distribution.
+In the visualization below eight tests are performed. Random, Ascending, Ascending Saw, Generic,
+Descending, Descending Saw, Random Tail, and Wave order.
+
+[![cubesort visualization](https://github.com/scandum/gridsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
+
+In the visualization below one test is performed on a random distribution. This visualization more accurately shows the use of pointer operations to partition memory.
 
 Cyan numbers are unsorted, green numbers are sorted, white numbers are sorted and ready to be
 merged, yellow numbers are the index upon which a binary search is performed to find out where
 to insert the next number, magenta numbers are ready to be merged back to the main array.
 
 ![gridsort visualization](https://github.com/scandum/gridsort/blob/main/gridsort.gif)
-
-In the visualization below eight tests are performed. Random, Ascending, Ascending Saw, Generic,
-Descending, Descending Saw, Random Tail, and Wave order.
-
-[![cubesort visualization](https://github.com/scandum/gridsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
 
 Benchmarks
 ----------
