@@ -27,7 +27,7 @@
 */
 
 /*
-	gridsort 1.1.1.2
+	gridsort 1.1.1.3
 */
 
 STRUCT(x_node)
@@ -46,14 +46,14 @@ STRUCT(y_node)
 	VAR *z_axis2;
 };
 
-void FUNC(split_y_node)(STRUCT(x_node) *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp);
+void FUNC(split_y_node)(STRUCT(x_node) *x_node, size_t y1, size_t y2, CMPFUNC *cmp);
 
 STRUCT(x_node) *FUNC(create_grid)(VAR *array, size_t nmemb, CMPFUNC *cmp)
 {
 	STRUCT(x_node) *x_node = (STRUCT(x_node) *) malloc(sizeof(STRUCT(x_node)));
-	STRUCT(y_node) *y_node = (STRUCT(y_node) *) malloc(sizeof(STRUCT(y_node)));
+	STRUCT(y_node) *y_node;
 
-	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z * BSC_Y < nmemb ; BSC_Z *= 2);
+	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z * BSC_Y < nmemb ; BSC_Z *= 4);
 
 	x_node->swap = (VAR *) malloc(BSC_Z * sizeof(VAR));
 
@@ -61,34 +61,107 @@ STRUCT(x_node) *FUNC(create_grid)(VAR *array, size_t nmemb, CMPFUNC *cmp)
 
 	x_node->y_axis = (STRUCT(y_node) **) malloc(BSC_X * sizeof(STRUCT(y_node) *));
 
-	x_node->y_axis[0] = y_node;
+	FUNC(quadsort_swap)(array, x_node->swap, BSC_Z * 2, sizeof(VAR), cmp);
 
-	// avoid unneeded binary searches by creating two y nodes right away
-
-	if (FUNC(quad_swap)(array, BSC_Z * 2, cmp) == 0)
+	for (int cnt = 0 ; cnt < 2 ; cnt++)
 	{
-		FUNC(quad_merge)(array, x_node->swap, BSC_Z * 2, 16, cmp);
+		y_node = (STRUCT(y_node) *) malloc(sizeof(STRUCT(y_node)));
+
+		y_node->z_axis1 = (VAR *) malloc(BSC_Z * sizeof(VAR));
+		memcpy(y_node->z_axis1, array + cnt * BSC_Z, BSC_Z * sizeof(VAR));
+
+		y_node->z_axis2 = (VAR *) malloc(BSC_Z * sizeof(VAR));
+
+		y_node->z_size = 0;
+
+		x_node->y_axis[cnt] = y_node;
+		x_node->y_base[cnt] = y_node->z_axis1[0];
 	}
-
-	y_node->z_axis1 = (VAR *) malloc(BSC_Z * sizeof(VAR));
-	memcpy(y_node->z_axis1, array, BSC_Z * sizeof(VAR));
-
-	y_node->z_axis2 = (VAR *) malloc(BSC_Z * sizeof(VAR));
-	memcpy(y_node->z_axis2, array + BSC_Z, BSC_Z * sizeof(VAR));
-
-	x_node->y_size = 1;
+	x_node->y_size = 2;
 	x_node->y = 0;
-
-	x_node->y_base[0] = y_node->z_axis1[0];
-
-	y_node->z_size = BSC_Z;
-
-	FUNC(split_y_node)(x_node, 0, 1, cmp);
 
 	return x_node;
 }
 
-// merge two sorted arrays
+
+void FUNC(twin_merge_cpy)(VAR *dest, STRUCT(y_node) *y_node, size_t nmemb1, size_t nmemb2, CMPFUNC *cmp)
+{
+	register VAR *pta, *ptb, *tpa, *tpb;
+
+	pta = y_node->z_axis1;
+	ptb = y_node->z_axis2;
+	tpa = pta + nmemb1 - 1;
+	tpb = ptb + nmemb2 - 1;
+
+	if (cmp(tpa, ptb) <= 0)
+	{
+		memcpy(dest, pta, nmemb1 * sizeof(VAR));
+
+		dest += nmemb1;
+
+		memcpy(dest, ptb, nmemb2 * sizeof(VAR));
+
+		return;
+	}
+
+	if (cmp(tpa, tpb) <= 0)
+	{
+		while (pta <= tpa)
+		{
+			*dest++ = cmp(pta, ptb) > 0 ? *ptb++ : *pta++;
+		}
+
+		while (ptb <= tpb)
+		{
+			*dest++ = *ptb++;
+		}
+	}
+	else
+	{
+		while (ptb <= tpb)
+		{
+			while (cmp(pta, ptb) <= 0)
+			{
+				*dest++ = *pta++;
+			}
+			*dest++ = *ptb++;
+		}
+
+		while (pta <= tpa)
+		{
+			*dest++ = *pta++;
+		}
+	}
+}
+
+// y_node->z_axis1 should be sorted and of BSC_Z size.
+// y_node->z_axis2 should be unsorted and of y_node->z_size size.
+
+void FUNC(bulksort_cpy)(STRUCT(x_node) *x_node, VAR *dest, STRUCT(y_node) *y_node, CMPFUNC *cmp)
+{
+	if (y_node->z_size > 128)
+	{
+		if (FUNC(quad_swap)(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			FUNC(quad_merge)(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else if (y_node->z_size > 16)
+	{
+		if (FUNC(quad_swap)(y_node->z_axis2, y_node->z_size, cmp) == 0)
+		{
+			FUNC(tail_merge)(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
+		}
+	}
+	else
+	{
+		FUNC(tail_swap)(y_node->z_axis2, y_node->z_size, cmp);
+	}
+
+	FUNC(twin_merge_cpy)(dest, y_node, BSC_Z, y_node->z_size, cmp);
+}
+
+// merge two sorted arrays across two buckets
 
 void FUNC(twin_merge)(VAR *swap, STRUCT(y_node) *y_node, CMPFUNC *cmp)
 {
@@ -142,22 +215,14 @@ void FUNC(twin_merge)(VAR *swap, STRUCT(y_node) *y_node, CMPFUNC *cmp)
 	{
 		while (pts <= tps)
 		{
-			while (cmp(pts, ptb) > 0)
-			{
-				*pta++ = *ptb++;
-			}
-			*pta++ = *pts++;
+			*pta++ = cmp(pts, ptb) > 0 ? *ptb++ : *pts++;
 		}
 	}
 	else
 	{
 		while (ptb <= tpb)
 		{
-			while (cmp(pts, ptb) <= 0)
-			{
-				*pta++ = *pts++;
-			}
-			*pta++ = *ptb++;
+			*pta++ = cmp(pts, ptb) <= 0 ? *pts++ : *ptb++;
 		}
 
 		while (pts <= tps)
@@ -167,108 +232,38 @@ void FUNC(twin_merge)(VAR *swap, STRUCT(y_node) *y_node, CMPFUNC *cmp)
 	}
 }
 
-void FUNC(twin_merge_cpy)(VAR *dest, STRUCT(y_node) *y_node, size_t nmemb1, size_t nmemb2, CMPFUNC *cmp)
+void FUNC(bulksort)(STRUCT(x_node) *x_node, STRUCT(y_node) *y_node, CMPFUNC *cmp)
 {
-	register VAR *pta, *ptb, *tpa, *tpb;
+	FUNC(quadsort_swap)(y_node->z_axis2, x_node->swap, y_node->z_size, sizeof(VAR), cmp);
 
-	pta = y_node->z_axis1;
-	ptb = y_node->z_axis2;
-	tpa = pta + nmemb1 - 1;
-	tpb = ptb + nmemb2 - 1;
-
-	if (cmp(tpa, ptb) <= 0)
-	{
-		memcpy(dest, pta, nmemb1 * sizeof(VAR));
-
-		dest += nmemb1;
-
-		memcpy(dest, ptb, nmemb2 * sizeof(VAR));
-
-		return;
-	}
-
-	if (cmp(tpa, tpb) <= 0)
-	{
-		while (pta <= tpa)
-		{
-			while (cmp(pta, ptb) > 0)
-			{
-				*dest++ = *ptb++;
-			}
-			*dest++ = *pta++;
-		}
-
-		while (ptb <= tpb)
-		{
-			*dest++ = *ptb++;
-		}
-	}
-	else
-	{
-		while (ptb <= tpb)
-		{
-			while (cmp(pta, ptb) <= 0)
-			{
-				*dest++ = *pta++;
-			}
-			*dest++ = *ptb++;
-		}
-
-		while (pta <= tpa)
-		{
-			*dest++ = *pta++;
-		}
-	}
-}
-
-// y_node->z_axis1 should be sorted and of BSC_Z size.
-// y_node->z_axis2 should be unsorted and of y_node->z_size size.
-
-void FUNC(bulksort_cpy)(STRUCT(x_node) *x_node, VAR *dest, STRUCT(y_node) *y_node, CMPFUNC *cmp)
-{
-	if (y_node->z_size > 128)
-	{
-		if (FUNC(quad_swap)(y_node->z_axis2, y_node->z_size, cmp) == 0)
-		{
-			FUNC(quad_merge)(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
-		}
-	}
-	else if (y_node->z_size > 16)
-	{
-		if (FUNC(quad_swap)(y_node->z_axis2, y_node->z_size, cmp) == 0)
-		{
-			FUNC(tail_merge)(y_node->z_axis2, x_node->swap, y_node->z_size, 16, cmp);
-		}
-	}
-	else
-	{
-		FUNC(tail_swap)(y_node->z_axis2, y_node->z_size, cmp);
-	}
-
-	if (dest)
-	{
-		FUNC(twin_merge_cpy)(dest, y_node, BSC_Z, y_node->z_size, cmp);
-	}
-	else if (y_node->z_axis1)
-	{
-		FUNC(twin_merge)(x_node->swap, y_node, cmp);
-	}
+	FUNC(twin_merge)(x_node->swap, y_node, cmp);
 }
 
 size_t FUNC(adaptive_binary_search)(STRUCT(x_node) *x_node, VAR *array, VAR key, CMPFUNC *cmp)
 {
+	static unsigned int run;
 	size_t top, mid;
 	VAR *base = array;
 
+	if (!run)
+	{
+		top = x_node->y_size;
+
+		goto monobound;
+	}
+
 	if (x_node->y == x_node->y_size - 1)
 	{
-		if (cmp(&array[x_node->y], &key) <= 0)
+		if (cmp(base + x_node->y, &key) <= 0)
 		{
 			return x_node->y;
 		}
 		top = x_node->y;
+
+		goto monobound;
 	}
-	else if (x_node->y == 0)
+
+	if (x_node->y == 0)
 	{
 		base++;
 
@@ -277,11 +272,57 @@ size_t FUNC(adaptive_binary_search)(STRUCT(x_node) *x_node, VAR *array, VAR key,
 			return 0;
 		}
 		top = x_node->y_size - 1;
+
+		goto monobound;
+	}
+
+	base += x_node->y;
+	top = 2;
+
+	if (cmp(base, &key) <= 0)
+	{
+		VAR *roof = array + x_node->y_size;
+
+		while (1)
+		{
+			if (base + top >= roof)
+			{
+				top = roof - base;
+				break;
+			}
+
+			base += top;
+
+			if (cmp(base, &key) > 0)
+			{
+				base -= top;
+				break;
+			}
+			top *= 2;
+		}
 	}
 	else
 	{
-		top = x_node->y_size;
+		while (1)
+		{
+			if (base - top <= array)
+			{
+				top = base - array;
+				base = array;
+				break;
+			}
+
+			base -= top;
+
+			if (cmp(&key, base) > 0)
+			{
+				break;
+			}
+			top *= 2;
+		}
 	}
+
+	monobound:
 
 	while (top > 1)
 	{
@@ -293,40 +334,41 @@ size_t FUNC(adaptive_binary_search)(STRUCT(x_node) *x_node, VAR *array, VAR key,
 		}
 		top -= mid;
 	}
-	return x_node->y = base - array;
+
+	top = base - array;
+
+	run = x_node->y == top;
+
+	return x_node->y = top;
 }
 
 void FUNC(destroy_grid)(STRUCT(x_node) *x_node, VAR *array, CMPFUNC *cmp)
 {
-	size_t z_len = 0;
+	STRUCT(y_node) *y_node;
+	size_t y, z;
 
-	if (x_node->y_size)
+	for (y = z = 0 ; y < x_node->y_size ; y++)
 	{
-		STRUCT(y_node) *y_node;
-		size_t y;
+		y_node = x_node->y_axis[y];
 
-		for (y = 0 ; y < x_node->y_size ; y++)
+		if (y_node->z_size)
 		{
-			y_node = x_node->y_axis[y];
-
-			if (y_node->z_size)
-			{
-				FUNC(bulksort_cpy)(x_node, &array[z_len], y_node, cmp);
-			}
-			else
-			{
-				memcpy(&array[z_len], y_node->z_axis1, BSC_Z * sizeof(VAR));
-			}
-			z_len += BSC_Z + y_node->z_size;
-
-			free(y_node->z_axis1);
-			free(y_node->z_axis2);
-
-			free(y_node);
+			FUNC(bulksort_cpy)(x_node, &array[z], y_node, cmp);
 		}
+		else
+		{
+			memcpy(&array[z], y_node->z_axis1, BSC_Z * sizeof(VAR));
+		}
+		z += BSC_Z + y_node->z_size;
+
+		free(y_node->z_axis1);
+		free(y_node->z_axis2);
+
+		free(y_node);
 	}
 	free(x_node->y_axis);
 	free(x_node->y_base);
+	free(x_node->swap);
 
 	free(x_node);
 }
@@ -348,9 +390,9 @@ void FUNC(insert_z_node)(STRUCT(x_node) *x_node, VAR key, CMPFUNC *cmp)
 	}
 }
 
-void FUNC(insert_y_node)(STRUCT(x_node) *x_node, unsigned short y)
+void FUNC(insert_y_node)(STRUCT(x_node) *x_node, size_t y)
 {
-	unsigned short end = ++x_node->y_size;
+	size_t end = ++x_node->y_size;
 
 	if (x_node->y_size % BSC_X == 0)
 	{
@@ -369,7 +411,7 @@ void FUNC(insert_y_node)(STRUCT(x_node) *x_node, unsigned short y)
 	x_node->y_axis[y]->z_axis2 = (VAR *) malloc(BSC_Z * sizeof(VAR));
 }
 
-void FUNC(split_y_node)(STRUCT(x_node) *x_node, unsigned short y1, unsigned short y2, CMPFUNC *cmp)
+void FUNC(split_y_node)(STRUCT(x_node) *x_node, size_t y1, size_t y2, CMPFUNC *cmp)
 {
 	STRUCT(y_node) *y_node1, *y_node2;
 	VAR *swap;
@@ -379,10 +421,7 @@ void FUNC(split_y_node)(STRUCT(x_node) *x_node, unsigned short y1, unsigned shor
 	y_node1 = x_node->y_axis[y1];
 	y_node2 = x_node->y_axis[y2];
 
-	if (x_node->y_size > 2)
-	{
-		FUNC(bulksort_cpy)(x_node, NULL, y_node1, cmp);
-	}
+	FUNC(bulksort)(x_node, y_node1, cmp);
 
 	y_node1->z_size = y_node2->z_size = 0;
 
@@ -390,4 +429,33 @@ void FUNC(split_y_node)(STRUCT(x_node) *x_node, unsigned short y1, unsigned shor
 
 	x_node->y_base[y1] = y_node1->z_axis1[0];
 	x_node->y_base[y2] = y_node2->z_axis1[0];
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//┌───────────────────────────────────────────────────────────────────────┐//
+//│    ██████┐ ██████┐ ██████┐██████┐ ███████┐ ██████┐ ██████┐ ████████┐  │//
+//│   ██┌────┘ ██┌──██┐└─██┌─┘██┌──██┐██┌────┘██┌───██┐██┌──██┐└──██┌──┘  │//
+//│   ██│  ███┐██████┌┘  ██│  ██│  ██│███████┐██│   ██│██████┌┘   ██│     │//
+//│   ██│   ██│██┌──██┐  ██│  ██│  ██│└────██│██│   ██│██┌──██┐   ██│     │//
+//│   └██████┌┘██│  ██│██████┐██████┌┘███████│└██████┌┘██│  ██│   ██│     │//
+//│    └─────┘ └─┘  └─┘└─────┘└─────┘ └──────┘ └─────┘ └─┘  └─┘   └─┘     │//
+//└───────────────────────────────────────────────────────────────────────┘//
+/////////////////////////////////////////////////////////////////////////////
+
+void FUNC(gridsort)(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
+{
+	size_t cnt = nmemb;
+	VAR *pta = (VAR *) array;
+
+	STRUCT(x_node) *grid = FUNC(create_grid)(pta, cnt, cmp);
+
+	pta += BSC_Z * 2;
+	cnt -= BSC_Z * 2;
+
+	while (cnt--)
+	{
+		FUNC(insert_z_node)(grid, *pta++, cmp);
+	}
+
+	FUNC(destroy_grid)(grid, (VAR *) array, cmp);
 }
