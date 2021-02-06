@@ -71,11 +71,10 @@ to insert the next number, magenta numbers are ready to be merged back to the ma
 
 Benchmarks
 ----------
-The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
-The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sort() in the benchmark should be an in-place IntroSort.
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_stdsort.png)
-
+<details><summary>The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
+The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sort() in the benchmark should be an in-place IntroSort.</summary>
 |      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
 | std::sort |  1000000 |  128 | 0.110756 | 0.111165 |           1 |     random order |
@@ -114,12 +113,12 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 |           |          |      |          |          |             |                  |
 | std::sort |  1000000 |   32 | 0.028018 | 0.028512 |           1 |         unstable |
 |  gridsort |  1000000 |   32 | 0.012377 | 0.012522 |           1 |           stable |
-
-
-The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
-The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
+</summary>
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_qsort.png)
+
+<details><summary>The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
+The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.</summary>
 
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
@@ -159,3 +158,4 @@ The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the be
 |           |          |      |          |          |             |                  |
 |     qsort |   100000 |   32 | 0.003005 | 0.003460 |     1209200 |           stable |
 |  gridsort |   100000 |   32 | 0.001975 | 0.002004 |      867862 |           stable |
+</details>
