@@ -1,7 +1,6 @@
 Intro
 -----
-This document describes a partitioning stable comparison-based sort named 
-gridsort.
+This document describes a partitioning stable adaptive comparison-based sort named gridsort.
 
 Binary Cube
 -----------
@@ -10,6 +9,8 @@ Gridsort sorts data by storing data in a simplified [binary cube](https://github
 Boundless Binary Search
 -----------------------
 The first step when sorting an element is a [boundless binary search](https://github.com/scandum/binary_search) to pin point the bucket where the element should be stored. A boundless binary search is up to two times faster than the legacy binary search used by most applications. Once a bucket is found the element is added to the end of the bucket.
+
+Gridsort switches to an adaptive binary search when it detects data that is already sorted.
 
 Quadsort
 --------
@@ -32,26 +33,26 @@ Big O
 ```cobol
                  ┌───────────────────────┐┌───────────────────────┐
                  │comparisons            ││swap memory            │
-┌───────────────┐├───────┬───────┬───────┤├───────┬───────┬───────┤┌──────┐┌─────────┐┌──────┐
-│name           ││min    │avg    │max    ││min    │avg    │max    ││stable││partition││radix │
-├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├──────┤
-│gridsort       ││n      │n log n│n log n││n      │n      │n      ││yes   ││yes      ││no    │
-├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├──────┤
-│mergesort      ││n log n│n log n│n log n││n      │n      │n      ││yes   ││no       ││no    │
-├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├──────┤
-│quadsort       ││n      │n log n│n log n││1      │n      │n      ││yes   ││no       ││no    │
-├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├──────┤
-│quicksort      ││n      │n log n│n²     ││1      │1      │1      ││no    ││yes      ││no    │
-├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├──────┤
-│introsort      ││n log n│n log n│n log n││1      │1      │1      ││no    ││yes      ││no    │
-└───────────────┘└───────┴───────┴───────┘└───────┴───────┴───────┘└──────┘└─────────┘└──────┘
+┌───────────────┐├───────┬───────┬───────┤├───────┬───────┬───────┤┌──────┐┌─────────┐┌─────────┐
+│name           ││min    │avg    │max    ││min    │avg    │max    ││stable││partition││adaptive │
+├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├─────────┤
+│gridsort       ││n      │n log n│n log n││n      │n      │n      ││yes   ││yes      ││yes      │
+├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├─────────┤
+│mergesort      ││n log n│n log n│n log n││n      │n      │n      ││yes   ││no       ││no       │
+├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├─────────┤
+│quadsort       ││n      │n log n│n log n││1      │n      │n      ││yes   ││no       ││yes      │
+├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├─────────┤
+│quicksort      ││n      │n log n│n²     ││1      │1      │1      ││no    ││yes      ││no       │
+├───────────────┤├───────┼───────┼───────┤├───────┼───────┼───────┤├──────┤├─────────┤├─────────┤
+│introsort      ││n log n│n log n│n log n││1      │1      │1      ││no    ││yes      ││no       │
+└───────────────┘└───────┴───────┴───────┘└───────┴───────┴───────┘└──────┘└─────────┘└─────────┘
 ```
 
 Gridsort makes n comparisons when the data is fully in order or in reverse order.
 
 Porting
 -------
-People wanting to port gridsort might want to have a look at [tailsort](https://github.com/scandum/tailsort), which is a simplified implementation of quadsort. Gridsort itself is a simplified implementation of cubesort.
+People wanting to port gridsort might want to have a look at [twinsort](https://github.com/scandum/twinsort), which is a simplified implementation of quadsort. Gridsort itself is a simplified implementation of cubesort.
 
 Visualization
 -------------
@@ -72,6 +73,8 @@ Benchmarks
 ----------
 The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
 The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sort() in the benchmark should be an in-place IntroSort.
+
+![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_stdsort.png)
 
 |      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
@@ -115,6 +118,8 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
 The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
+
+![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_qsort.png)
 
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
