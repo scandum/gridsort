@@ -113,7 +113,7 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 |           |          |      |          |          |             |                  |
 | std::sort |  1000000 |   32 | 0.028018 | 0.028512 |           1 |         unstable |
 |  gridsort |  1000000 |   32 | 0.012377 | 0.012522 |           1 |           stable |
-</summary>
+</details>
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_qsort.png)
 
