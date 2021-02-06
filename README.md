@@ -78,6 +78,7 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_stdsort.png)
 
 <details><summary>data table</summary>
+
 |      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
 | std::sort |  1000000 |  128 | 0.110756 | 0.111165 |           1 |     random order |
@@ -124,6 +125,7 @@ The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the be
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_qsort.png)
 
 <details><summary>data table</summary>
+
 |      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
 | --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
 |     qsort |   100000 |  128 | 0.019153 | 0.020135 |     1536181 |     random order |
