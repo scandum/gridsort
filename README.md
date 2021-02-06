@@ -52,7 +52,7 @@ Gridsort makes n comparisons when the data is fully in order or in reverse order
 
 Porting
 -------
-People wanting to port gridsort might want to have a look at [tailsort](https://github.com/scandum/tailsort), which is a simplified implementation of quadsort. Gridsort itself is a simplified implementation of cubesort.
+People wanting to port gridsort might want to have a look at [twinsort](https://github.com/scandum/twinsort), which is a simplified implementation of quadsort. Gridsort itself is a simplified implementation of cubesort.
 
 Visualization
 -------------
