@@ -59,7 +59,7 @@ Visualization
 In the visualization below eight tests are performed. Random, Ascending, Ascending Saw, Generic,
 Descending, Descending Saw, Random Tail, and Wave order.
 
-[![cubesort visualization](https://github.com/scandum/gridsort/blob/main/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
+[![cubesort visualization](https://github.com/scandum/gridsort/blob/main/images/cubesort.gif)](https://www.youtube.com/watch?v=DHC1qnV4mao)
 
 In the visualization below one test is performed on a random distribution. This visualization more accurately shows the use of pointer operations to partition memory.
 
@@ -67,7 +67,7 @@ Cyan numbers are unsorted, green numbers are sorted, white numbers are sorted an
 merged, yellow numbers are the index upon which a binary search is performed to find out where
 to insert the next number, magenta numbers are ready to be merged back to the main array.
 
-![gridsort visualization](https://github.com/scandum/gridsort/blob/main/gridsort.gif)
+![gridsort visualization](https://github.com/scandum/gridsort/blob/main/images/gridsort.gif)
 
 Benchmarks
 ----------
@@ -75,7 +75,7 @@ Benchmarks
 The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
 The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sort() in the benchmark should be an in-place IntroSort.
 
-![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_stdsort.png)
+![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_stdsort.png)
 
 <details><summary>data table</summary>
 
@@ -122,7 +122,7 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sor
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
 The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
 
-![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/gridsort_vs_qsort.png)
+![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_qsort.png)
 
 <details><summary>data table</summary>
 
