@@ -73,7 +73,7 @@ Benchmarks
 ----------
 
 The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
-The source code was compiled using g++ -O3 -w -fpermissive bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort are inlined. The std::sort() in the benchmark should be an in-place IntroSort. 
+The source code was compiled using g++ -O3 -w -fpermissive bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort and std::sort are inlined. The std::sort() in the benchmark should be an in-place IntroSort. 
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_stdsort.png)
 
@@ -120,7 +120,7 @@ The source code was compiled using g++ -O3 -w -fpermissive bench.c. The bar grap
 </details>
 
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
-The source code was compiled using gcc -O3 bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort are not inlined. The stdlib qsort() in the benchmark is a mergesort variant. 
+The source code was compiled using gcc -O3 bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort and qsort are not inlined. The stdlib qsort() in the benchmark is a mergesort variant. 
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_qsort.png)
 
