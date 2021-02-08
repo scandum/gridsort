@@ -73,95 +73,95 @@ Benchmarks
 ----------
 
 The following benchmark was on WSL gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) using the [wolfsort](https://github.com/scandum/wolfsort) benchmark.
-The source code was compiled using g++ -O3 -w -fpermissive bench.c. The std::sort() in the benchmark should be an in-place IntroSort.
+The source code was compiled using g++ -O3 -w -fpermissive bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort are inlined. The std::sort() in the benchmark should be an in-place IntroSort. 
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_stdsort.png)
 
 <details><summary>data table</summary>
 
-|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-| std::sort |  1000000 |  128 | 0.110756 | 0.111165 |           1 |     random order |
-|  gridsort |  1000000 |  128 | 0.104944 | 0.105506 |           1 |     random order |
+|      Name |    Items | Type |     Best |  Average |     Loops | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+| std::sort |  1000000 |  128 | 0.110579 | 0.110943 |         1 |     100 |     random order |
+|  gridsort |  1000000 |  128 | 0.105021 | 0.105474 |         1 |     100 |     random order |
 
-|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-| std::sort |  1000000 |   64 | 0.065638 | 0.065886 |           1 |     random order |
-|  gridsort |  1000000 |   64 | 0.054830 | 0.055245 |           1 |     random order |
+|      Name |    Items | Type |     Best |  Average |     Loops | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+| std::sort |  1000000 |   64 | 0.065856 | 0.066048 |         1 |     100 |     random order |
+|  gridsort |  1000000 |   64 | 0.054824 | 0.055161 |         1 |     100 |     random order |
 
-|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-| std::sort |  1000000 |   32 | 0.064990 | 0.065196 |           1 |     random order |
-|  gridsort |  1000000 |   32 | 0.053937 | 0.054295 |           1 |     random order |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.011424 | 0.011780 |           1 |  ascending order |
-|  gridsort |  1000000 |   32 | 0.003396 | 0.003469 |           1 |  ascending order |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.033669 | 0.033935 |           1 |    ascending saw |
-|  gridsort |  1000000 |   32 | 0.013438 | 0.013535 |           1 |    ascending saw |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.030115 | 0.030396 |           1 |    generic order |
-|  gridsort |  1000000 |   32 | 0.016028 | 0.016220 |           1 |    generic order |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.008769 | 0.008950 |           1 | descending order |
-|  gridsort |  1000000 |   32 | 0.003706 | 0.003814 |           1 | descending order |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.025817 | 0.026060 |           1 |   descending saw |
-|  gridsort |  1000000 |   32 | 0.012219 | 0.012422 |           1 |   descending saw |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.044224 | 0.044493 |           1 |      random tail |
-|  gridsort |  1000000 |   32 | 0.015914 | 0.016011 |           1 |      random tail |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.055512 | 0.055722 |           1 |      random half |
-|  gridsort |  1000000 |   32 | 0.029508 | 0.029627 |           1 |      random half |
-|           |          |      |          |          |             |                  |
-| std::sort |  1000000 |   32 | 0.028018 | 0.028512 |           1 |         unstable |
-|  gridsort |  1000000 |   32 | 0.012377 | 0.012522 |           1 |           stable |
+|      Name |    Items | Type |     Best |  Average |     Loops | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+| std::sort |  1000000 |   32 | 0.065065 | 0.065391 |         1 |     100 |     random order |
+|  gridsort |  1000000 |   32 | 0.053922 | 0.054189 |         1 |     100 |     random order |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.011443 | 0.011800 |         1 |     100 |  ascending order |
+|  gridsort |  1000000 |   32 | 0.003463 | 0.003526 |         1 |     100 |  ascending order |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.033698 | 0.033884 |         1 |     100 |    ascending saw |
+|  gridsort |  1000000 |   32 | 0.013591 | 0.013691 |         1 |     100 |    ascending saw |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.030675 | 0.030970 |         1 |     100 |    generic order |
+|  gridsort |  1000000 |   32 | 0.015841 | 0.016119 |         1 |     100 |    generic order |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.008789 | 0.009153 |         1 |     100 | descending order |
+|  gridsort |  1000000 |   32 | 0.003662 | 0.003750 |         1 |     100 | descending order |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.026253 | 0.026449 |         1 |     100 |   descending saw |
+|  gridsort |  1000000 |   32 | 0.012359 | 0.012535 |         1 |     100 |   descending saw |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.044365 | 0.044593 |         1 |     100 |      random tail |
+|  gridsort |  1000000 |   32 | 0.015910 | 0.016008 |         1 |     100 |      random tail |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.055819 | 0.056025 |         1 |     100 |      random half |
+|  gridsort |  1000000 |   32 | 0.029525 | 0.029700 |         1 |     100 |      random half |
+|           |          |      |          |          |           |         |                  |
+| std::sort |  1000000 |   32 | 0.027889 | 0.028305 |         1 |     100 |  ascending tiles |
+|  gridsort |  1000000 |   32 | 0.012352 | 0.012592 |         1 |     100 |  ascending tiles |
 </details>
 
 The following benchmark was on WSL gcc version 7.4.0 (Ubuntu 7.4.0-1ubuntu1~18.04.1).
-The source code was compiled using gcc -O3 bench.c. The stdlib qsort() in the benchmark is a mergesort variant.
+The source code was compiled using gcc -O3 bench.c. The bar graph shows the best run out of 100 on 32 bit integers. Comparisons for gridsort are not inlined. The stdlib qsort() in the benchmark is a mergesort variant. 
 
 ![gridsort vs stdsort](https://github.com/scandum/gridsort/blob/main/images/gridsort_vs_qsort.png)
 
 <details><summary>data table</summary>
 
-|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-|     qsort |   100000 |  128 | 0.019153 | 0.020135 |     1536181 |     random order |
-|  gridsort |   100000 |  128 | 0.013082 | 0.013162 |     1645873 |     random order |
+|      Name |    Items | Type |     Best |  Average |  Compares | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+|     qsort |   100000 |  128 | 0.019332 | 0.020187 |   1536181 |     100 |     random order |
+|  gridsort |   100000 |  128 | 0.013077 | 0.013145 |   1645784 |     100 |     random order |
 
-|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-|     qsort |   100000 |   64 | 0.009234 | 0.009487 |     1536491 |     random order |
-|  gridsort |   100000 |   64 | 0.006838 | 0.006893 |     1655053 |     random order |
+|      Name |    Items | Type |     Best |  Average |  Compares | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+|     qsort |   100000 |   64 | 0.009379 | 0.009614 |   1536491 |     100 |     random order |
+|  gridsort |   100000 |   64 | 0.007207 | 0.007287 |   1654963 |     100 |     random order |
 
-|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |
-| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |
-|     qsort |   100000 |   32 | 0.008624 | 0.008857 |     1536634 |     random order |
-|  gridsort |   100000 |   32 | 0.006446 | 0.006574 |     1649039 |     random order |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.002276 | 0.002438 |      815024 |  ascending order |
-|  gridsort |   100000 |   32 | 0.000697 | 0.000717 |      202485 |  ascending order |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.003065 | 0.003215 |      915019 |    ascending saw |
-|  gridsort |   100000 |   32 | 0.002185 | 0.002204 |      639891 |    ascending saw |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.006438 | 0.006661 |     1532339 |    generic order |
-|  gridsort |   100000 |   32 | 0.002879 | 0.002920 |     1151399 |    generic order |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.002308 | 0.002514 |      853904 | descending order |
-|  gridsort |   100000 |   32 | 0.000713 | 0.000726 |      200036 | descending order |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.002736 | 0.002949 |     1063907 |   descending saw |
-|  gridsort |   100000 |   32 | 0.001871 | 0.001916 |      841945 |   descending saw |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.003904 | 0.004116 |     1012028 |      random tail |
-|  gridsort |   100000 |   32 | 0.002155 | 0.002187 |      627734 |      random tail |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.005655 | 0.005864 |     1200835 |      random half |
-|  gridsort |   100000 |   32 | 0.003736 | 0.003776 |     1001698 |      random half |
-|           |          |      |          |          |             |                  |
-|     qsort |   100000 |   32 | 0.003005 | 0.003460 |     1209200 |           stable |
-|  gridsort |   100000 |   32 | 0.001975 | 0.002004 |      867862 |           stable |
+|      Name |    Items | Type |     Best |  Average |  Compares | Samples |     Distribution |
+| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |
+|     qsort |   100000 |   32 | 0.008563 | 0.008838 |   1536634 |     100 |     random order |
+|  gridsort |   100000 |   32 | 0.006496 | 0.006611 |   1648950 |     100 |     random order |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.002268 | 0.002402 |    815024 |     100 |  ascending order |
+|  gridsort |   100000 |   32 | 0.000685 | 0.000695 |    202485 |     100 |  ascending order |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.003044 | 0.003232 |    915019 |     100 |    ascending saw |
+|  gridsort |   100000 |   32 | 0.002210 | 0.002243 |    639757 |     100 |    ascending saw |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.006369 | 0.006623 |   1532339 |     100 |    generic order |
+|  gridsort |   100000 |   32 | 0.002942 | 0.003046 |   1151338 |     100 |    generic order |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.002314 | 0.002538 |    853904 |     100 | descending order |
+|  gridsort |   100000 |   32 | 0.000661 | 0.000677 |    200036 |     100 | descending order |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.002754 | 0.002995 |   1063907 |     100 |   descending saw |
+|  gridsort |   100000 |   32 | 0.001940 | 0.002044 |    841084 |     100 |   descending saw |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.003875 | 0.004092 |   1012028 |     100 |      random tail |
+|  gridsort |   100000 |   32 | 0.002176 | 0.002206 |    627704 |     100 |      random tail |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.005599 | 0.005844 |   1200835 |     100 |      random half |
+|  gridsort |   100000 |   32 | 0.003740 | 0.003799 |   1001582 |     100 |      random half |
+|           |          |      |          |          |           |         |                  |
+|     qsort |   100000 |   32 | 0.003878 | 0.004274 |   1209200 |     100 |  ascending tiles |
+|  gridsort |   100000 |   32 | 0.003160 | 0.003267 |    867858 |     100 |  ascending tiles |
 </details>
