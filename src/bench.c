@@ -51,7 +51,7 @@
 
 //typedef int CMPFUNC (const void *a, const void *b);
 
-typedef void SRTFUNC(void *array, size_t nmemb, size_t size, CMPFUNC *ignore);
+typedef void SRTFUNC(void *array, size_t nmemb, size_t size, CMPFUNC *cmpf);
 
 
 // Must prevent inlining so the benchmark is fair against qsort.
@@ -128,7 +128,7 @@ void seed_rand(unsigned long long seed)
 	srand(seed);
 }
 
-void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximum, int samples, int repetitions, SRTFUNC *srt, const char *name, const char *desc, size_t size, CMPFUNC *cmpf)
+void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximum, int samples, int repetitions, SRTFUNC *srt, const char *name, char *desc, size_t size, CMPFUNC *cmpf)
 {
 	long long start, end, total, best, average;
 	size_t rep, sam, max;
@@ -142,18 +142,18 @@ void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximu
 		{
 			if (comparisons)
 			{
-				printf("%s\n", "|      Name |    Items | Type |     Best |  Average | Comparisons |     Distribution |");
-				printf("%s\n", "| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |");
+				printf("%s\n", "|      Name |    Items | Type |     Best |  Average |  Compares | Samples |     Distribution |");
+				printf("%s\n", "| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |");
 			}
 			else
 			{
-				printf("%s\n", "|      Name |    Items | Type |     Best |  Average | Repetitions |     Distribution |");
-				printf("%s\n", "| --------- | -------- | ---- | -------- | -------- | ----------- | ---------------- |");
+				printf("%s\n", "|      Name |    Items | Type |     Best |  Average |     Loops | Samples |     Distribution |");
+				printf("%s\n", "| --------- | -------- | ---- | -------- | -------- | --------- | ------- | ---------------- |");
 			}
 		}
 		else
 		{
-			printf("%s\n", "|           |          |      |          |          |             |                  |");
+				printf("%s\n", "|           |          |      |          |          |           |         |                  |");
 		}
 		return;
 	}
@@ -261,30 +261,20 @@ void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximu
 		{
 			if (pta[cnt - 1] > pta[cnt])
 			{
-				if (maximum == 1000)
-				{
-					printf("%17s: sorted %7d i%ds in %f seconds. KO: %5lu (un%s)\n", name, maximum, (int) size * 8, best / 1000000.0, comparisons, desc);
-				}
-				else if (maximum == 1000000)
-				{
-					printf("%17s: sorted %7d i%ds in %f seconds. MO: %10lu (un%s)\n", name, maximum, (int) size * 8, best / 1000000.0, comparisons, desc);
-				}
-				else
-				{
-					printf("%17s: sorted %7d i%ds in %f seconds. (un%s)\n", name, maximum, (int) size * 8, best / 1000000.0, desc);
-				}
-				return;
+				strcpy(desc, "\e[1;31munstable\e[0m");
+
+				break;
 			}
 		}
 	}
 
 	if (comparisons)
 	{
-		printf("|%10s | %8d |  %3d | %f | %f | %11lu | %16s |\n", name, maximum, (int) size * 8, best / 1000000.0, average / 1000000.0, comparisons, desc);
+		printf("|%10s | %8d | %4d | %f | %f | %9d | %7d | %16s |\n", name, maximum, (int) size * 8, best / 1000000.0, average / 1000000.0, (int) comparisons, samples, desc);
 	}
 	else
 	{
-		printf("|%10s | %8d |  %3d | %f | %f | %11d | %16s |\n", name, maximum, (int) size * 8, best / 1000000.0, average / 1000000.0, repetitions, desc);
+		printf("|%10s | %8d | %4d | %f | %f | %9d | %7d | %16s |\n", name, maximum, (int) size * 8, best / 1000000.0, average / 1000000.0, repetitions, samples, desc);
 	}
 
 	if (minimum != maximum)
@@ -780,9 +770,11 @@ int main(int argc, char **argv)
 	memcpy(v_array, r_array, max * sizeof(int));
 	quadsort(v_array, max, sizeof(int), cmp_int);
 
+	strcpy(dist, "ascending tiles");
+
 	for (cnt = 0 ; cnt < sizeof(sorts) / sizeof(char *) ; cnt++)
 	{
-		test_sort(a_array, r_array, v_array, max, max, samples, repetitions, qsort, sorts[cnt], "stable", sizeof(int), cmp_int);
+		test_sort(a_array, r_array, v_array, max, max, samples, repetitions, qsort, sorts[cnt], dist, sizeof(int), cmp_stable);
 	}
 
 	if (repetitions > 0)
