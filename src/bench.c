@@ -80,12 +80,10 @@ __attribute__ ((noinline)) int cmp_stable(const void * a, const void * b)
 __attribute__ ((noinline)) int cmp_long(const void * a, const void * b)
 {
 	comparisons++;
-/*	if ((*(long long *) a > *(long long *) b) - (*(long long *) a < *(long long *) b)
-	{
-		return -1;
-	}
-*/
-	return *(long long *) a > *(long long *) b;
+
+	return (*(long long *) a > *(long long *) b) - (*(long long *) a < *(long long *) b);
+
+//	return *(long long *) a > *(long long *) b;
 }
 
 __attribute__ ((noinline)) int cmp_long_double(const void * a, const void * b)
@@ -261,7 +259,7 @@ void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximu
 		{
 			if (pta[cnt - 1] > pta[cnt])
 			{
-				strcpy(desc, "\e[1;31munstable\e[0m");
+				sprintf(desc, "\e[1;31m%16s\e[0m", "unstable");
 
 				break;
 			}
@@ -277,7 +275,7 @@ void test_sort(void *array, void *unsorted, void *valid, int minimum, int maximu
 		printf("|%10s | %8d | %4d | %f | %f | %9d | %7d | %16s |\n", name, maximum, (int) size * 8, best / 1000000.0, average / 1000000.0, repetitions, samples, desc);
 	}
 
-	if (minimum != maximum)
+	if (minimum != maximum || cmpf == cmp_stable)
 	{
 		return;
 	}
@@ -770,10 +768,10 @@ int main(int argc, char **argv)
 	memcpy(v_array, r_array, max * sizeof(int));
 	quadsort(v_array, max, sizeof(int), cmp_int);
 
-	strcpy(dist, "ascending tiles");
-
 	for (cnt = 0 ; cnt < sizeof(sorts) / sizeof(char *) ; cnt++)
 	{
+		strcpy(dist, "ascending tiles");
+
 		test_sort(a_array, r_array, v_array, max, max, samples, repetitions, qsort, sorts[cnt], dist, sizeof(int), cmp_stable);
 	}
 
