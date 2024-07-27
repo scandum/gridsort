@@ -1,31 +1,4 @@
-/*
-	Copyright (C) 2014-2021 Igor van den Hoven ivdhoven@gmail.com
-*/
-
-/*
-	Permission is hereby granted, free of charge, to any person obtaining
-	a copy of this software and associated documentation files (the
-	"Software"), to deal in the Software without restriction, including
-	without limitation the rights to use, copy, modify, merge, publish,
-	distribute, sublicense, and/or sell copies of the Software, and to
-	permit persons to whom the Software is furnished to do so, subject to
-	the following conditions:
-
-	The above copyright notice and this permission notice shall be
-	included in all copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-	CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-	TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
-/*
-	gridsort 1.1.4.2
-*/
+// gridsort 1.2.1.3 - Igor van den Hoven ivdhoven@gmail.com
 
 STRUCT(x_node)
 {
@@ -48,26 +21,15 @@ STRUCT(x_node) *FUNC(create_grid)(VAR *array, size_t nmemb, CMPFUNC *cmp)
 	STRUCT(x_node) *x_node = (STRUCT(x_node) *) malloc(sizeof(STRUCT(x_node)));
 	STRUCT(y_node) *y_node;
 
-	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z * BSC_Y < nmemb ; BSC_Z *= 4);
-/*
-	x_node->swap = (VAR *) malloc(2 * nmemb * sizeof(VAR));
+	for (BSC_Z = BSC_X ; BSC_Z * BSC_Z / 4 < nmemb ; BSC_Z *= 4);
 
-	if (x_node->swap == NULL)
-	{
-		printf("malloc error");
-	}
-	else
-	{
-		free(x_node->swap);
-	}
-*/
-	x_node->swap = (VAR *) malloc(BSC_Z * sizeof(VAR));
+	x_node->swap = (VAR *) malloc(BSC_Z * 2 * sizeof(VAR));
 
 	x_node->y_base = (VAR *) malloc(BSC_Z * sizeof(VAR));
 
 	x_node->y_axis = (STRUCT(y_node) **) malloc(BSC_Z * sizeof(STRUCT(y_node) *));
 
-	FUNC(quadsort_swap)(array, x_node->swap, BSC_Z * 2, cmp);
+	FUNC(quadsort_swap)(array, x_node->swap, BSC_Z * 2, BSC_Z * 2, cmp);
 
 	for (int cnt = 0 ; cnt < 2 ; cnt++)
 	{
@@ -89,51 +51,131 @@ STRUCT(x_node) *FUNC(create_grid)(VAR *array, size_t nmemb, CMPFUNC *cmp)
 	return x_node;
 }
 
+// used by destroy_grid
+
 // y_node->z_axis1 should be sorted and of BSC_Z size.
 // y_node->z_axis2 should be unsorted and of y_node->z_size size.
 
 void FUNC(twin_merge_cpy)(STRUCT(x_node) *x_node, VAR *dest, STRUCT(y_node) *y_node, CMPFUNC *cmp)
 {
-	VAR *pta = y_node->z_axis1;
-	VAR *ptb = y_node->z_axis2;
+	VAR *ptl = y_node->z_axis1;
+	VAR *ptr = y_node->z_axis2;
 	size_t nmemb1 = BSC_Z;
 	size_t nmemb2 = y_node->z_size;
+	VAR *tpl = y_node->z_axis1 + nmemb1 - 1;
+	VAR *tpr = y_node->z_axis2 + nmemb2 - 1;
+	VAR *ptd = dest;
+	VAR *tpd = dest + nmemb1 + nmemb2 - 1;
+	size_t loop, x, y;
 
-	FUNC(quadsort_swap)(ptb, x_node->swap, nmemb2, cmp);
+	FUNC(quadsort_swap)(ptr, x_node->swap, nmemb2, nmemb2, cmp);
 
 	while (1)
 	{
-		if (cmp(pta, ptb) <= 0)
+		if (tpl - ptl > 8)
 		{
-			*dest++ = *pta++;
-
-			if (--nmemb1 == 0)
+			ptl8_ptr: if (cmp(ptl + 7, ptr) <= 0)
 			{
-				do *dest++ = *ptb++; while (--nmemb2);
-				return;
+				memcpy(ptd, ptl, 8 * sizeof(VAR)); ptd += 8; ptl += 8;
+
+				if (tpl - ptl > 8) {goto ptl8_ptr;} continue;
+			}
+
+			tpl8_tpr: if (cmp(tpl - 7, tpr) > 0)
+			{
+				tpd -= 7; tpl -= 7; memcpy(tpd--, tpl--, 8 * sizeof(VAR));
+
+				if (tpl - ptl > 8) {goto tpl8_tpr;} continue;
 			}
 		}
-		else
-		{
-			*dest++ = *ptb++;
 
-			if (--nmemb2 == 0)
+		if (tpr - ptr > 8)
+		{
+			ptl_ptr8: if (cmp(ptl, ptr + 7) > 0)
 			{
-				do *dest++ = *pta++; while (--nmemb1);
-				return;
+				memcpy(ptd, ptr, 8 * sizeof(VAR)); ptd += 8; ptr += 8;
+
+				if (tpr - ptr > 8) {goto ptl_ptr8;} continue;
+			}
+
+			tpl_tpr8: if (cmp(tpl, tpr - 7) <= 0)
+			{
+				tpd -= 7; tpr -= 7; memcpy(tpd--, tpr--, 8 * sizeof(VAR));
+
+				if (tpr - ptr > 8) {goto tpl_tpr8;} continue;
 			}
 		}
+
+		if (tpd - ptd < 16)
+		{
+			break;
+		}
+
+		loop = 8; do
+		{
+			head_branchless_merge(ptd, x, ptl, ptr, cmp);
+			tail_branchless_merge(tpd, y, tpl, tpr, cmp);
+		}
+		while (--loop);
+	}
+
+	while (tpl - ptl > 1 && tpr - ptr > 1)
+	{
+		if (cmp(ptl + 1, ptr) <= 0)
+		{
+			*ptd++ = *ptl++; *ptd++ = *ptl++;
+		}
+		else if (cmp(ptl, ptr + 1) > 0)
+		{
+			*ptd++ = *ptr++; *ptd++ = *ptr++;
+		}
+		else 
+		{
+			x = cmp(ptl, ptr) <= 0; y = !x; ptd[x] = *ptr; ptr += 1; ptd[y] = *ptl; ptl += 1; ptd += 2;
+			x = cmp(ptl, ptr) <= 0; y = !x; ptd[x] = *ptr; ptr += y; ptd[y] = *ptl; ptl += x; ptd++;
+		}
+	}
+
+	while (ptl <= tpl && ptr <= tpr)
+	{
+		*ptd++ = cmp(ptl, ptr) <= 0 ? *ptl++ : *ptr++;
+	}
+	while (ptl <= tpl)
+	{
+		*ptd++ = *ptl++;
+	}
+	while (ptr <= tpr)
+	{
+		*ptd++ = *ptr++;
 	}
 }
 
+void FUNC(parity_twin_merge)(VAR *ptl, VAR *ptr, VAR *ptd, VAR *tpd, size_t block, CMPFUNC *cmp)
+{
+	VAR *tpl, *tpr;
+#if !defined __clang__
+	unsigned char x, y;
+#endif
+	tpl = ptl + block - 1;
+	tpr = ptr + block - 1;
+
+	for (block-- ; block ; block--)
+	{
+		head_branchless_merge(ptd, x, ptl, ptr, cmp);
+		tail_branchless_merge(tpd, y, tpl, tpr, cmp);
+	}
+	*ptd = cmp(ptl, ptr) <= 0 ? *ptl : *ptr;
+	*tpd = cmp(tpl, tpr)  > 0 ? *tpl : *tpr;
+}
+
 // merge two sorted arrays across two buckets
+// [AB][AB] --> [AA][  ] + [BB][  ]
 
 void FUNC(twin_merge)(STRUCT(x_node) *x_node, STRUCT(y_node) *y_node1, STRUCT(y_node) *y_node2, CMPFUNC *cmp)
 {
 	VAR *pta, *ptb, *tpa, *tpb, *pts;
-	unsigned int loop;
 
-	FUNC(quadsort_swap)(y_node1->z_axis2, x_node->swap, y_node1->z_size, cmp);
+	FUNC(quadsort_swap)(y_node1->z_axis2, x_node->swap, BSC_Z, BSC_Z, cmp);
 
 	pta = y_node1->z_axis1;
 	ptb = y_node1->z_axis2;
@@ -159,51 +201,9 @@ void FUNC(twin_merge)(STRUCT(x_node) *x_node, STRUCT(y_node) *y_node1, STRUCT(y_
 		return;
 	}
 
-	pts = y_node2->z_axis1;
+	FUNC(parity_twin_merge)(pta, ptb, y_node2->z_axis2, y_node2->z_axis1 + BSC_Z - 1, BSC_Z, cmp);
 
-	loop = BSC_Z;
-
-	do
-	{
-		*pts++ = cmp(pta, ptb) <= 0 ? *pta++ : *ptb++;
-	}
-	while (--loop);
-
-	pts = y_node2->z_axis2;
-
-	if (cmp(tpa, tpb) <= 0)
-	{
-		do
-		{
-			*pts++ = cmp(pta, ptb) <= 0 ? *pta++ : *ptb++;
-		}
-		while (pta <= tpa);
-
-		do
-		{
-			*pts++ = *ptb++;
-		}
-		while (ptb <= tpb);
-	}
-	else
-	{
-		do
-		{
-			*pts++ = cmp(pta, ptb) <= 0 ? *pta++ : *ptb++;
-		}
-		while (ptb <= tpb);
-
-		do
-		{
-			*pts++ = *pta++;
-		}
-		while (pta <= tpa);
-	}
-
-	pts = y_node1->z_axis1;
-	y_node1->z_axis1 = y_node2->z_axis1;
-	y_node2->z_axis1 = y_node2->z_axis2;
-	y_node2->z_axis2 = pts;
+	pta = y_node1->z_axis1; y_node1->z_axis1 = y_node2->z_axis2; y_node2->z_axis2 = pta;
 }
 
 void FUNC(destroy_grid)(STRUCT(x_node) *x_node, VAR *array, CMPFUNC *cmp)
@@ -326,8 +326,8 @@ void FUNC(insert_y_node)(STRUCT(x_node) *x_node, size_t y)
 
 	if (x_node->y_size % BSC_Z == 0)
 	{
-		x_node->y_base = realloc(x_node->y_base, (x_node->y_size + BSC_Z) * sizeof(VAR));
-		x_node->y_axis = realloc(x_node->y_axis, (x_node->y_size + BSC_Z) * sizeof(STRUCT(y_node) *));
+		x_node->y_base = (VAR *) realloc(x_node->y_base, (x_node->y_size + BSC_Z) * sizeof(VAR));
+		x_node->y_axis = (STRUCT(y_node) **) realloc(x_node->y_axis, (x_node->y_size + BSC_Z) * sizeof(STRUCT(y_node) *));
 	}
 
 	while (y < --end)

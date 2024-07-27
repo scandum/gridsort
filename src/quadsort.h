@@ -1,31 +1,4 @@
-/*
-	Copyright (C) 2014-2021 Igor van den Hoven ivdhoven@gmail.com
-*/
-
-/*
-	Permission is hereby granted, free of charge, to any person obtaining
-	a copy of this software and associated documentation files (the
-	"Software"), to deal in the Software without restriction, including
-	without limitation the rights to use, copy, modify, merge, publish,
-	distribute, sublicense, and/or sell copies of the Software, and to
-	permit persons to whom the Software is furnished to do so, subject to
-	the following conditions:
-
-	The above copyright notice and this permission notice shall be
-	included in all copies or substantial portions of the Software.
-
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-	CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-	TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
-/*
-	quadsort 1.1.4.2
-*/
+// quadsort 1.2.1.3 - Igor van den Hoven ivdhoven@gmail.com
 
 #ifndef QUADSORT_H
 #define QUADSORT_H
@@ -34,197 +7,105 @@
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+#include <float.h>
+#include <string.h>
+
+//#include <stdalign.h>
 
 typedef int CMPFUNC (const void *a, const void *b);
 
 //#define cmp(a,b) (*(a) > *(b))
 
-#define swap_two(array, swap)  \
-{  \
-	if (cmp(array, array + 1) > 0)  \
-	{  \
-		swap = array[1]; array[1] = array[0]; array[0] = swap;  \
-	}  \
-}
 
-#define swap_three(array, swap)  \
-{  \
-	if (cmp(array, array + 1) > 0)  \
-	{  \
-		if (cmp(array, array + 2) <= 0)  \
-		{  \
-			swap = array[0]; array[0] = array[1]; array[1] = swap;  \
-		}  \
-		else if (cmp(array + 1, array + 2) > 0)  \
-		{  \
-			swap = array[0]; array[0] = array[2]; array[2] = swap;  \
-		}  \
-		else  \
-		{  \
-			swap = array[0]; array[0] = array[1]; array[1] = array[2]; array[2] = swap;  \
-		}  \
-	}  \
-	else if (cmp(array + 1, array + 2) > 0)  \
-	{  \
-		if (cmp(array, array + 2) > 0)  \
-		{  \
-			swap = array[2]; array[2] = array[1]; array[1] = array[0]; array[0] = swap;  \
-		}  \
-		else   \
-		{  \
-			swap = array[2]; array[2] = array[1]; array[1] = swap;  \
-		}  \
-	}  \
-}  \
+// When sorting an array of pointers, like a string array, the QUAD_CACHE needs
+// to be set for proper performance when sorting large arrays.
+// quadsort_prim() can be used to sort arrays of 32 and 64 bit integers
+// without a comparison function or cache restrictions.
 
-#define swap_four(array, swap)  \
-{  \
-	if (cmp(array, array + 1) > 0)  \
-	{  \
-		swap = array[0]; array[0] = array[1]; array[1] = swap;  \
-	}  \
-	if (cmp(array + 2, array + 3) > 0)  \
-	{  \
-		swap = array[2]; array[2] = array[3]; array[3] = swap;  \
-	}  \
-	if (cmp(array + 1, array + 2) > 0)  \
-	{  \
-		if (cmp(array, array + 2) <= 0)  \
-		{  \
-			if (cmp(array + 1, array + 3) <= 0)  \
-			{  \
-				swap = array[1]; array[1] = array[2]; array[2] = swap;  \
-			}  \
-			else  \
-			{  \
-				swap = array[1]; array[1] = array[2]; array[2] = array[3]; array[3] = swap;  \
-			}  \
-		}  \
-		else if (cmp(array, array + 3) > 0)  \
-		{  \
-			swap = array[1]; array[1] = array[3]; array[3] = swap;  \
-			swap = array[0]; array[0] = array[2]; array[2] = swap;  \
-		}  \
-		else if (cmp(array + 1, array + 3) <= 0)  \
-		{  \
-			swap = array[1]; array[1] = array[0]; array[0] = array[2]; array[2] = swap;  \
-		}  \
-		else  \
-		{  \
-			swap = array[1]; array[1] = array[0]; array[0] = array[2]; array[2] = array[3]; array[3] = swap;  \
-		}  \
-	}  \
-}
+// With a 6 MB L3 cache a value of 262144 works well.
 
-#define tail_swap_eight(array, pta, ptt, end, key, cmp) \
-{ \
-	pta = end++; \
-	ptt = pta--; \
- \
-	if (cmp(pta, ptt) > 0) \
-	{ \
-		key = *ptt; \
-		*ptt-- = *pta--; \
- \
-		if (cmp(pta - 2, &key) > 0) \
-		{ \
-			*ptt-- = *pta--; *ptt-- = *pta--; *ptt-- = *pta--; \
-		} \
-		if (pta > array && cmp(pta - 1, &key) > 0) \
-		{ \
-			*ptt-- = *pta--; *ptt-- = *pta--; \
-		} \
-		if (pta >= array && cmp(pta, &key) > 0) \
-		{ \
-			*ptt-- = *pta; \
-		} \
-		*ptt = key; \
-	} \
-}
+#ifdef cmp
+  #define QUAD_CACHE 4294967295
+#else
+//#define QUAD_CACHE 131072
+  #define QUAD_CACHE 262144
+//#define QUAD_CACHE 524288
+//#define QUAD_CACHE 4294967295
+#endif
 
-#define swap_five(array, pta, ptt, end, key, cmp) \
-{ \
-	end = array + 4; \
- \
-	pta = end++; \
-	ptt = pta--; \
- \
-	if (cmp(pta, ptt) > 0) \
-	{ \
-		key = *ptt; \
-		*ptt-- = *pta--; \
- \
-		if (pta > array && cmp(pta - 1, &key) > 0) \
-		{ \
-			*ptt-- = *pta--; *ptt-- = *pta--; \
-		} \
-		if (pta >= array && cmp(pta, &key) > 0) \
-		{ \
-			*ptt-- = *pta; \
-		} \
-		*ptt = key; \
-	} \
-}
+// utilize branchless ternary operations in clang
 
-#define swap_six(array, pta, ptt, end, key, cmp) \
-{ \
-	swap_five(array, pta, ptt, end, key, cmp); \
-	tail_swap_eight(array, pta, ptt, end, key, cmp); \
-}
+#if !defined __clang__
+#define head_branchless_merge(ptd, x, ptl, ptr, cmp)  \
+	x = cmp(ptl, ptr) <= 0;  \
+	*ptd = *ptl;  \
+	ptl += x;  \
+	ptd[x] = *ptr;  \
+	ptr += !x;  \
+	ptd++;
+#else
+#define head_branchless_merge(ptd, x, ptl, ptr, cmp)  \
+	*ptd++ = cmp(ptl, ptr) <= 0 ? *ptl++ : *ptr++;
+#endif
 
-#define swap_seven(array, pta, ptt, end, key, cmp) \
-{ \
-	swap_six(array, pta, ptt, end, key, cmp); \
-	tail_swap_eight(array, pta, ptt, end, key, cmp); \
-}
+#if !defined __clang__
+#define tail_branchless_merge(tpd, y, tpl, tpr, cmp)  \
+	y = cmp(tpl, tpr) <= 0;  \
+	*tpd = *tpl;  \
+	tpl -= !y;  \
+	tpd--;  \
+	tpd[y] = *tpr;  \
+	tpr -= y;
+#else
+#define tail_branchless_merge(tpd, x, tpl, tpr, cmp)  \
+	*tpd-- = cmp(tpl, tpr) > 0 ? *tpl-- : *tpr--;
+#endif
 
-#define swap_eight(array, pta, ptt, end, key, cmp) \
-{ \
-	swap_seven(array, pta, ptt, end, key, cmp); \
-	tail_swap_eight(array, pta, ptt, end, key, cmp); \
-}
+// guarantee small parity merges are inlined with minimal overhead
 
-//////////////////////////////////////////////////////////
-//┌────────────────────────────────────────────────────┐//
-//│                █████┐    ██████┐ ██████┐████████┐  │//
-//│               ██┌──██┐   ██┌──██┐└─██┌─┘└──██┌──┘  │//
-//│               └█████┌┘   ██████┌┘  ██│     ██│     │//
-//│               ██┌──██┐   ██┌──██┐  ██│     ██│     │//
-//│               └█████┌┘   ██████┌┘██████┐   ██│     │//
-//│                └────┘    └─────┘ └─────┘   └─┘     │//
-//└────────────────────────────────────────────────────┘//
-//////////////////////////////////////////////////////////
+#define parity_merge_two(array, swap, x, ptl, ptr, pts, cmp)  \
+	ptl = array; ptr = array + 2; pts = swap;  \
+	head_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	*pts = cmp(ptl, ptr) <= 0 ? *ptl : *ptr;  \
+  \
+	ptl = array + 1; ptr = array + 3; pts = swap + 3;  \
+	tail_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	*pts = cmp(ptl, ptr)  > 0 ? *ptl : *ptr;
 
-#undef VAR
-#undef FUNC
-#undef STRUCT
+#define parity_merge_four(array, swap, x, ptl, ptr, pts, cmp)  \
+	ptl = array + 0; ptr = array + 4; pts = swap;  \
+	head_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	head_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	head_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	*pts = cmp(ptl, ptr) <= 0 ? *ptl : *ptr;  \
+  \
+	ptl = array + 3; ptr = array + 7; pts = swap + 7;  \
+	tail_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	tail_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	tail_branchless_merge(pts, x, ptl, ptr, cmp);  \
+	*pts = cmp(ptl, ptr)  > 0 ? *ptl : *ptr;
 
-#define VAR char
-#define FUNC(NAME) NAME##8
-#define STRUCT(NAME) struct NAME##8
 
-#include "quadsort.c"
+#if !defined __clang__
+#define branchless_swap(pta, swap, x, cmp)  \
+	x = cmp(pta, pta + 1) > 0;  \
+	swap = pta[!x];  \
+	pta[0] = pta[x];  \
+	pta[1] = swap;
+#else
+#define branchless_swap(pta, swap, x, cmp)  \
+	x = 0;  \
+	swap = cmp(pta, pta + 1) > 0 ? pta[x++] : pta[1];  \
+	pta[0] = pta[x];  \
+	pta[1] = swap;
+#endif
 
-//////////////////////////////////////////////////////////
-//┌────────────────────────────────────────────────────┐//
-//│           ▄██┐   █████┐    ██████┐ ██████┐████████┐│//
-//│          ████│  ██┌───┘    ██┌──██┐└─██┌─┘└──██┌──┘│//
-//│          └─██│  ██████┐    ██████┌┘  ██│     ██│   │//
-//│            ██│  ██┌──██┐   ██┌──██┐  ██│     ██│   │//
-//│          ██████┐└█████┌┘   ██████┌┘██████┐   ██│   │//
-//│          └─────┘ └────┘    └─────┘ └─────┘   └─┘   │//
-//└────────────────────────────────────────────────────┘//
-//////////////////////////////////////////////////////////
-
-#undef VAR
-#undef FUNC
-#undef STRUCT
-
-#define VAR short
-#define FUNC(NAME) NAME##16
-#define STRUCT(NAME) struct NAME##16
-
-#include "quadsort.c"
+#define swap_branchless(pta, swap, x, y, cmp)  \
+	x = cmp(pta, pta + 1) > 0;  \
+	y = !x;  \
+	swap = pta[y];  \
+	pta[0] = pta[x];  \
+	pta[1] = swap;
 
 //////////////////////////////////////////////////////////
 // ┌───────────────────────────────────────────────────┐//
@@ -237,15 +118,39 @@ typedef int CMPFUNC (const void *a, const void *b);
 // └───────────────────────────────────────────────────┘//
 //////////////////////////////////////////////////////////
 
-#undef VAR
-#undef FUNC
-#undef STRUCT
-
 #define VAR int
 #define FUNC(NAME) NAME##32
-#define STRUCT(NAME) struct NAME##32
 
 #include "quadsort.c"
+
+#undef VAR
+#undef FUNC
+
+// quadsort_prim
+
+#define VAR int
+#define FUNC(NAME) NAME##_int32
+#ifndef cmp
+  #define cmp(a,b) (*(a) > *(b))
+  #include "quadsort.c"
+  #undef cmp
+#else
+  #include "quadsort.c"
+#endif
+#undef VAR
+#undef FUNC
+
+#define VAR unsigned int
+#define FUNC(NAME) NAME##_uint32
+#ifndef cmp
+  #define cmp(a,b) (*(a) > *(b))
+  #include "quadsort.c"
+  #undef cmp
+#else
+  #include "quadsort.c"
+#endif
+#undef VAR
+#undef FUNC
 
 //////////////////////////////////////////////////////////
 // ┌───────────────────────────────────────────────────┐//
@@ -258,15 +163,83 @@ typedef int CMPFUNC (const void *a, const void *b);
 // └───────────────────────────────────────────────────┘//
 //////////////////////////////////////////////////////////
 
-#undef VAR
-#undef FUNC
-#undef STRUCT
-
 #define VAR long long
 #define FUNC(NAME) NAME##64
-#define STRUCT(NAME) struct NAME##64
 
 #include "quadsort.c"
+
+#undef VAR
+#undef FUNC
+
+// quadsort_prim
+
+#define VAR long long
+#define FUNC(NAME) NAME##_int64
+#ifndef cmp
+  #define cmp(a,b) (*(a) > *(b))
+  #include "quadsort.c"
+  #undef cmp
+#else
+  #include "quadsort.c"
+#endif
+#undef VAR
+#undef FUNC
+
+#define VAR unsigned long long
+#define FUNC(NAME) NAME##_uint64
+#ifndef cmp
+  #define cmp(a,b) (*(a) > *(b))
+  #include "quadsort.c"
+  #undef cmp
+#else
+  #include "quadsort.c"
+#endif
+#undef VAR
+#undef FUNC
+
+// This section is outside of 32/64 bit pointer territory, so no cache checks
+// necessary, unless sorting 32+ byte structures.
+
+#undef QUAD_CACHE
+#define QUAD_CACHE 4294967295
+
+//////////////////////////////////////////////////////////
+//┌────────────────────────────────────────────────────┐//
+//│                █████┐    ██████┐ ██████┐████████┐  │//
+//│               ██┌──██┐   ██┌──██┐└─██┌─┘└──██┌──┘  │//
+//│               └█████┌┘   ██████┌┘  ██│     ██│     │//
+//│               ██┌──██┐   ██┌──██┐  ██│     ██│     │//
+//│               └█████┌┘   ██████┌┘██████┐   ██│     │//
+//│                └────┘    └─────┘ └─────┘   └─┘     │//
+//└────────────────────────────────────────────────────┘//
+//////////////////////////////////////////////////////////
+
+#define VAR char
+#define FUNC(NAME) NAME##8
+
+#include "quadsort.c"
+
+#undef VAR
+#undef FUNC
+
+//////////////////////////////////////////////////////////
+//┌────────────────────────────────────────────────────┐//
+//│           ▄██┐   █████┐    ██████┐ ██████┐████████┐│//
+//│          ████│  ██┌───┘    ██┌──██┐└─██┌─┘└──██┌──┘│//
+//│          └─██│  ██████┐    ██████┌┘  ██│     ██│   │//
+//│            ██│  ██┌──██┐   ██┌──██┐  ██│     ██│   │//
+//│          ██████┐└█████┌┘   ██████┌┘██████┐   ██│   │//
+//│          └─────┘ └────┘    └─────┘ └─────┘   └─┘   │//
+//└────────────────────────────────────────────────────┘//
+//////////////////////////////////////////////////////////
+
+#define VAR short
+#define FUNC(NAME) NAME##16
+
+#include "quadsort.c"
+
+#undef VAR
+#undef FUNC
 
 //////////////////////////////////////////////////////////
 //┌────────────────────────────────────────────────────┐//
@@ -279,16 +252,38 @@ typedef int CMPFUNC (const void *a, const void *b);
 //└────────────────────────────────────────────────────┘//
 //////////////////////////////////////////////////////////
 
-#undef VAR
-#undef FUNC
-#undef STRUCT
+// 128 reflects the name, though the actual size of a long double is 64, 80,
+// 96, or 128 bits, depending on platform.
 
-#define VAR long double
-#define FUNC(NAME) NAME##128
-#define STRUCT(NAME) struct NAME##128
+#if (DBL_MANT_DIG < LDBL_MANT_DIG)
+  #define VAR long double
+  #define FUNC(NAME) NAME##128
+  #include "quadsort.c"
+  #undef VAR
+  #undef FUNC
+#endif
+
+///////////////////////////////////////////////////////////
+//┌─────────────────────────────────────────────────────┐//
+//│ ██████┐██┐   ██┐███████┐████████┐ ██████┐ ███┐  ███┐│//
+//│██┌────┘██│   ██│██┌────┘└──██┌──┘██┌───██┐████┐████││//
+//│██│     ██│   ██│███████┐   ██│   ██│   ██│██┌███┌██││//
+//│██│     ██│   ██│└────██│   ██│   ██│   ██│██│└█┌┘██││//
+//│└██████┐└██████┌┘███████│   ██│   └██████┌┘██│ └┘ ██││//
+//│ └─────┘ └─────┘ └──────┘   └─┘    └─────┘ └─┘    └─┘│//
+//└─────────────────────────────────────────────────────┘//
+///////////////////////////////////////////////////////////
+
+/*
+typedef struct {char bytes[32];} struct256;
+#define VAR struct256
+#define FUNC(NAME) NAME##256
 
 #include "quadsort.c"
 
+#undef VAR
+#undef FUNC
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 //┌─────────────────────────────────────────────────────────────────────────┐//
@@ -301,6 +296,7 @@ typedef int CMPFUNC (const void *a, const void *b);
 //└─────────────────────────────────────────────────────────────────────────┘//
 ///////////////////////////////////////////////////////////////////////////////
 
+
 void quadsort(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
 {
 	if (nmemb < 2)
@@ -311,27 +307,127 @@ void quadsort(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
 	switch (size)
 	{
 		case sizeof(char):
-			return quadsort8(array, nmemb, cmp);
+			quadsort8(array, nmemb, cmp);
+			return;
 
 		case sizeof(short):
-			return quadsort16(array, nmemb, cmp);
+			quadsort16(array, nmemb, cmp);
+			return;
 
 		case sizeof(int):
-			return quadsort32(array, nmemb, cmp);
+			quadsort32(array, nmemb, cmp);
+			return;
 
 		case sizeof(long long):
-			return quadsort64(array, nmemb, cmp);
-
+			quadsort64(array, nmemb, cmp);
+			return;
+#if (DBL_MANT_DIG < LDBL_MANT_DIG)
 		case sizeof(long double):
-			return quadsort128(array, nmemb, cmp);
+			quadsort128(array, nmemb, cmp);
+			return;
+#endif
+//		case sizeof(struct256):
+//			quadsort256(array, nmemb, cmp);
+//			return;
 
 		default:
-			return assert(size == sizeof(char) || size == sizeof(short) || size == sizeof(int) || size == sizeof(long long) || size == sizeof(long double));
+#if (DBL_MANT_DIG < LDBL_MANT_DIG)
+			assert(size == sizeof(char) || size == sizeof(short) || size == sizeof(int) || size == sizeof(long long) || size == sizeof(long double));
+#else
+			assert(size == sizeof(char) || size == sizeof(short) || size == sizeof(int) || size == sizeof(long long));
+#endif
+//			qsort(array, nmemb, size, cmp);
 	}
 }
 
-#undef VAR
-#undef FUNC
-#undef STRUCT
+// suggested size values for primitives:
+
+//		case  0: unsigned char
+//		case  1: signed char
+//		case  2: signed short
+//		case  3: unsigned short
+//		case  4: signed int
+//		case  5: unsigned int
+//		case  6: float
+//		case  7: double
+//		case  8: signed long long
+//		case  9: unsigned long long
+//		case  ?: long double, use sizeof(long double):
+
+void quadsort_prim(void *array, size_t nmemb, size_t size)
+{
+	if (nmemb < 2)
+	{
+		return;
+	}
+
+	switch (size)
+	{
+		case 4:
+			quadsort_int32(array, nmemb, NULL);
+			return;
+		case 5:
+			quadsort_uint32(array, nmemb, NULL);
+			return;
+		case 8:
+			quadsort_int64(array, nmemb, NULL);
+			return;
+		case 9:
+			quadsort_uint64(array, nmemb, NULL);
+			return;
+		default:
+			assert(size == sizeof(int) || size == sizeof(int) + 1 || size == sizeof(long long) || size == sizeof(long long) + 1);
+			return;
+	}
+}
+
+// Sort arrays of structures, the comparison function must be by reference.
+
+void quadsort_size(void *array, size_t nmemb, size_t size, CMPFUNC *cmp)
+{
+	char **pti, *pta, *pts;
+	size_t index, offset;
+
+	if (nmemb < 2)
+	{
+		return;
+	}
+	pta = (char *) array;
+	pti = (char **) malloc(nmemb * sizeof(char *));
+
+	assert(pti != NULL);
+
+	for (index = offset = 0 ; index < nmemb ; index++)
+	{
+		pti[index] = pta + offset;
+
+		offset += size;
+	}
+
+	switch (sizeof(size_t))
+	{
+		case 4: quadsort32(pti, nmemb, cmp); break;
+		case 8: quadsort64(pti, nmemb, cmp); break;
+	}
+
+	pts = (char *) malloc(nmemb * size);
+
+	assert(pts != NULL);
+	
+	for (index = 0 ; index < nmemb ; index++)
+	{
+		memcpy(pts, pti[index], size);
+
+		pts += size;
+	}
+	pts -= nmemb * size;
+
+	memcpy(array, pts, nmemb * size);
+
+	free(pti);
+	free(pts);
+}
+
+#undef QUAD_CACHE
 
 #endif
